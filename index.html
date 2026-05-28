@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Copa don Raúl</title>
+<title>Copa Don Raúl</title>
 
 <style>
 
@@ -68,6 +68,37 @@ th{
 
 .gold{
     background:#6b5200;
+}
+
+.tabla-wrapper{
+    border:2px solid #334155;
+    border-radius:12px;
+    overflow:hidden;
+}
+
+#creador{
+    text-decoration:none;
+    position:fixed;
+    top:12px;
+    right:16px;
+    font-size:14px;
+    opacity:0.85;
+    color:white;
+    z-index:99999;
+    pointer-events:all;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);
+    padding:7px 13px;
+    border-radius:20px;
+    font-weight:bold;
+    box-shadow:0 2px 8px rgba(0,0,0,0.4);
+    transition:opacity 0.2s;
+    will-change:transform;
+}
+#creador:hover{
+    opacity:1;
 }
 
 .silver{
@@ -249,7 +280,7 @@ button:hover{
 </div>
 
 <header>
-    <h1>🏆 Copa don Raúl</h1>
+    <h1>🏆 Copa Don Raúl</h1>
 </header>
 
 <div class="container">
@@ -261,8 +292,9 @@ button:hover{
 
 <div class="card">
 
-<h2>Tabla</h2>
+<h2>Tabla de Posiciones</h2>
 
+<div class="tabla-wrapper">
 <table>
 
 <thead>
@@ -283,6 +315,7 @@ button:hover{
 <tbody id="tablaBody"></tbody>
 
 </table>
+</div>
 
 </div>
 
@@ -314,13 +347,7 @@ Guardar Partido
 
 </div>
 
-<div class="card admin-only">
 
-<h2>Escudos</h2>
-
-<div id="escudosContainer"></div>
-
-</div>
 
 <div class="card">
 
@@ -350,19 +377,22 @@ Guardar Partido
 </div>
 
 <div id="modalGoles" class="modal">
-
 <div class="modal-content">
-
 <h2>Goles del partido</h2>
-
 <div id="contenidoGoles"></div>
-
-<button style="margin-top:20px;" onclick="cerrarModal()">
-Cerrar
-</button>
-
+<button style="margin-top:20px;" onclick="cerrarModal()">Cerrar</button>
+</div>
 </div>
 
+<div id="modalEditar" class="modal">
+<div class="modal-content">
+<h2>✏️ Editar Partido</h2>
+<div id="contenidoEditar"></div>
+<div style="display:flex; gap:10px; margin-top:20px;">
+    <button onclick="guardarEdicionCompleta()" style="flex:1; background:#16a34a;">💾 Guardar cambios</button>
+    <button onclick="cerrarModalEditar()" style="flex:1; background:#6b7280;">Cancelar</button>
+</div>
+</div>
 </div>
 
 <!-- Firebase SDK -->
@@ -442,8 +472,7 @@ function escucharCambios(){
         } else {
             escudos = {};
         }
-        renderEscudos();
-        actualizarTabla();
+                actualizarTabla();
         actualizarHistorial();
         actualizarGoleadores();
     }, () => setSyncStatus("error"));
@@ -493,23 +522,7 @@ function llenarSelects(){
     });
 }
 
-// ── Escudos ────────────────────────────────────────────────────────
-function renderEscudos(){
-    const container = document.getElementById("escudosContainer");
-    container.innerHTML = "";
-
-    equiposBase.forEach(eq => {
-        container.innerHTML += `
-        <div style="margin-bottom:20px;">
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-                <img id="escudo-${eq}" src="${escudos[eq] || ESCUDO_DEFAULT}" class="escudo">
-                <span>${eq}</span>
-            </div>
-            <input type="file" accept="image/*" onchange="subirEscudo(event,'${eq}')">
-        </div>`;
-    });
-}
-
+// ── Escudos ──────────────────────────────────────────────────────
 window.subirEscudo = function(event, equipo){
     const file = event.target.files[0];
     if(!file) return;
@@ -531,8 +544,7 @@ window.subirEscudo = function(event, equipo){
         escudos[equipo] = compressed;
 
         guardarDatos();
-        renderEscudos();
-        actualizarTabla();
+                actualizarTabla();
         actualizarHistorial();
         actualizarGoleadores();
 
@@ -756,19 +768,136 @@ window.guardarPartido = async function(){
 
 window.editarPartido = function(index){
     const p = partidos[index];
-    document.getElementById("equipo1").value = p.equipo1;
-    document.getElementById("equipo2").value = p.equipo2;
-    document.getElementById("gol1").value    = p.g1;
-    document.getElementById("gol2").value    = p.g2;
 
-    revisarEmpate();
+    // Construir opciones de equipos
+    const optsEq = equiposBase.map(n => `<option value="${n}" ${n===p.equipo1?"selected":""}>${n}</option>`).join("");
+    const optsEq2 = equiposBase.map(n => `<option value="${n}" ${n===p.equipo2?"selected":""}>${n}</option>`).join("");
+    const optsPen = equiposBase.map(n => `<option value="${n}" ${n===p.ganadorPenales?"selected":""}>${n}</option>`).join("");
 
-    if(p.g1 === p.g2){
-        document.getElementById("ganadorPenales").value = p.ganadorPenales;
+    const esEmpate = p.g1 === p.g2;
+
+    // Construir lista de goles
+    let golesHTML = "";
+    if(p.goles && p.goles.length > 0){
+        p.goles.forEach((g, gi) => {
+            golesHTML += `
+            <div style="display:flex; align-items:center; justify-content:space-between; background:#0f172a; padding:8px 12px; border-radius:8px; margin-bottom:8px;">
+                <span>${g.jugador}${g.ownGoal ? " (GEC)" : ""} — ${g.equipo} — ${g.cantidad || 1} ⚽</span>
+                <div style="display:flex; gap:8px;">
+                    <button style="padding:5px 10px; font-size:12px; background:#d97706;" onclick="editarGolModal(${index}, ${gi})">✏️</button>
+                    <button style="padding:5px 10px; font-size:12px; background:#dc2626;" onclick="borrarGolModal(${index}, ${gi})">🗑</button>
+                </div>
+            </div>`;
+        });
+    } else {
+        golesHTML = "<p class='small' style='margin-bottom:10px;'>Sin goles registrados.</p>";
     }
 
+    document.getElementById("contenidoEditar").innerHTML = `
+    <h3 style="margin-bottom:15px;">${p.equipo1} ${p.g1} - ${p.g2} ${p.equipo2}</h3>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+        <div>
+            <label style="font-size:12px; opacity:0.7;">Equipo 1</label>
+            <select id="edit_eq1" style="width:100%; padding:10px; margin-top:5px; border:none; border-radius:8px; background:#1e293b; color:white;">${optsEq}</select>
+            <input id="edit_g1" type="number" value="${p.g1}" style="width:100%; padding:10px; margin-top:8px; border:none; border-radius:8px; background:#1e293b; color:white;" oninput="revisarEmpateModal()">
+        </div>
+        <div>
+            <label style="font-size:12px; opacity:0.7;">Equipo 2</label>
+            <select id="edit_eq2" style="width:100%; padding:10px; margin-top:5px; border:none; border-radius:8px; background:#1e293b; color:white;">${optsEq2}</select>
+            <input id="edit_g2" type="number" value="${p.g2}" style="width:100%; padding:10px; margin-top:8px; border:none; border-radius:8px; background:#1e293b; color:white;" oninput="revisarEmpateModal()">
+        </div>
+    </div>
+
+    <div id="edit_penalesDiv" style="display:${esEmpate?"block":"none"}; background:#1e293b; padding:12px; border-radius:8px; margin-bottom:15px;">
+        <p class="small">Empate → elegir ganador por penales</p>
+        <select id="edit_ganadorPenales" style="width:100%; padding:10px; margin-top:5px; border:none; border-radius:8px; background:#0f172a; color:white;">${optsPen}</select>
+    </div>
+
+    <hr style="margin:20px 0; opacity:0.3;">
+
+    <h4 style="margin-bottom:12px;">⚽ Goles del partido</h4>
+    <div id="edit_listaGoles">${golesHTML}</div>
+
+    <div style="display:flex; gap:10px; margin-top:12px;">
+        <button onclick="agregarGolModal(${index}, document.getElementById('edit_eq1').value)" style="flex:1; background:#2563eb;">+ Gol ${p.equipo1}</button>
+        <button onclick="agregarGolModal(${index}, document.getElementById('edit_eq2').value)" style="flex:1; background:#2563eb;">+ Gol ${p.equipo2}</button>
+    </div>
+    `;
+
     editando = index;
-    window.scrollTo({ top:0, behavior:'smooth' });
+    document.getElementById("modalEditar").style.display = "block";
+};
+
+window.revisarEmpateModal = function(){
+    const g1 = document.getElementById("edit_g1").value;
+    const g2 = document.getElementById("edit_g2").value;
+    const div = document.getElementById("edit_penalesDiv");
+    if(div) div.style.display = (g1 !== "" && g2 !== "" && Number(g1) === Number(g2)) ? "block" : "none";
+};
+
+window.agregarGolModal = async function(index, equipo){
+    const input = prompt("Jugador (usa (GEC) para autogol):");
+    if(!input) return;
+    const cantidad = Number(prompt("Cantidad de goles:", "1"));
+    if(!cantidad || cantidad <= 0) return;
+    let jugador = input.trim();
+    let ownGoal = false;
+    if(jugador.toUpperCase().includes("(GEC)")){
+        ownGoal = true;
+        jugador = jugador.replace(/[(]GEC[)]/gi, "").trim();
+    }
+    partidos[index].goles.push({ jugador, equipo, cantidad, ownGoal });
+    await guardarDatos();
+    actualizarGoleadores();
+    editarPartido(index);
+};
+
+window.editarGolModal = async function(partidoIdx, golIdx){
+    const g = partidos[partidoIdx].goles[golIdx];
+    const nuevoJugador = prompt("Nombre del jugador:", g.jugador);
+    if(nuevoJugador === null) return;
+    const nuevaCantidad = Number(prompt("Cantidad de goles:", g.cantidad || 1));
+    if(!nuevaCantidad || nuevaCantidad <= 0) return;
+    let jugador = nuevoJugador.trim();
+    let ownGoal = false;
+    if(jugador.toUpperCase().includes("(GEC)")){
+        ownGoal = true;
+        jugador = jugador.replace(/[(]GEC[)]/gi, "").trim();
+    }
+    partidos[partidoIdx].goles[golIdx] = { ...partidos[partidoIdx].goles[golIdx], jugador, cantidad: nuevaCantidad, ownGoal };
+    await guardarDatos();
+    actualizarGoleadores();
+    editarPartido(partidoIdx);
+};
+
+window.borrarGolModal = async function(partidoIdx, golIdx){
+    if(!confirm("¿Eliminar este gol?")) return;
+    partidos[partidoIdx].goles.splice(golIdx, 1);
+    await guardarDatos();
+    actualizarGoleadores();
+    editarPartido(partidoIdx);
+};
+
+window.guardarEdicionCompleta = async function(){
+    if(editando === -1) return;
+    const eq1 = document.getElementById("edit_eq1").value;
+    const eq2 = document.getElementById("edit_eq2").value;
+    const g1  = Number(document.getElementById("edit_g1").value);
+    const g2  = Number(document.getElementById("edit_g2").value);
+    if(eq1 === eq2){ alert("No puedes elegir el mismo equipo"); return; }
+    let ganadorPenales = "";
+    if(g1 === g2){ ganadorPenales = document.getElementById("edit_ganadorPenales").value; }
+    partidos[editando] = { ...partidos[editando], equipo1:eq1, equipo2:eq2, g1, g2, ganadorPenales };
+    editando = -1;
+    await guardarDatos();
+    recalcularTabla();
+    cerrarModalEditar();
+};
+
+window.cerrarModalEditar = function(){
+    document.getElementById("modalEditar").style.display = "none";
+    editando = -1;
 };
 
 window.eliminarPartido = async function(index){
@@ -800,38 +929,21 @@ window.verGoles = function(index){
             <div style="background:#1e293b; padding:10px; border-radius:10px; margin-bottom:10px; ${g.equipo === p.equipo2 ? "text-align:right;" : ""}">
                 ${g.jugador}${g.ownGoal ? " (GEC)" : ""} ${emoji}
             </div>`;
-
-            if(g.equipo === p.equipo1){
-                golesIzq += bloque;
-            } else {
-                golesDer += bloque;
-            }
+            if(g.equipo === p.equipo1){ golesIzq += bloque; }
+            else { golesDer += bloque; }
         });
     } else {
         golesIzq = "<div class='small'>Sin goles registrados</div>";
     }
 
-    let html = `
+    const html = `
     <h3 style="text-align:center; margin-bottom:25px;">
         ${p.equipo1} ${p.g1} - ${p.g2} ${p.equipo2}
     </h3>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:40px;">
-        <div>
-            <h3>${p.equipo1}</h3>
-            ${golesIzq}
-        </div>
-        <div>
-            <h3 style="text-align:right;">${p.equipo2}</h3>
-            ${golesDer}
-        </div>
+        <div><h3>${p.equipo1}</h3>${golesIzq}</div>
+        <div><h3 style="text-align:right;">${p.equipo2}</h3>${golesDer}</div>
     </div>`;
-
-    if(admin){
-        html += `
-        <hr style="margin:25px 0;">
-        <button onclick="agregarGol(${index}, '${p.equipo1}')">+ Gol ${p.equipo1}</button>
-        <button style="margin-top:10px;" onclick="agregarGol(${index}, '${p.equipo2}')">+ Gol ${p.equipo2}</button>`;
-    }
 
     document.getElementById("contenidoGoles").innerHTML = html;
     document.getElementById("modalGoles").style.display = "block";
@@ -886,11 +998,17 @@ document.getElementById("gol2").addEventListener("input", revisarEmpate);
 // ── Inicio ─────────────────────────────────────────────────────────
 iniciarEquipos();
 llenarSelects();
-renderEscudos();
 activarVista();
 escucharCambios(); // Arranca la escucha en tiempo real
 
 </script>
+
+<a id="creador" href="https://instagram.com/m4sul" target="_blank">
+    Creado por @m4sul
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" style="flex-shrink:0;">
+        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+    </svg>
+</a>
 
 </body>
 </html>
