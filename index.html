@@ -35,6 +35,13 @@ header{
     display:grid;
     grid-template-columns:1.2fr 1fr;
     gap:20px;
+    align-items:start;
+}
+
+.columna-izq{
+    display:flex;
+    flex-direction:column;
+    gap:20px;
 }
 
 .card{
@@ -249,6 +256,9 @@ button:hover{
 
 <div class="grid">
 
+<!-- Columna izquierda: Tabla + Admin + Partidos -->
+<div class="columna-izq">
+
 <div class="card">
 
 <h2>Tabla</h2>
@@ -275,8 +285,6 @@ button:hover{
 </table>
 
 </div>
-
-<div>
 
 <div class="card admin-only">
 
@@ -306,13 +314,26 @@ Guardar Partido
 
 </div>
 
-<div class="card admin-only" style="margin-top:20px;">
+<div class="card admin-only">
 
 <h2>Escudos</h2>
 
 <div id="escudosContainer"></div>
 
 </div>
+
+<div class="card">
+
+<h2>Partidos</h2>
+
+<div id="historial"></div>
+
+</div>
+
+</div>
+
+<!-- Columna derecha: Goleadores -->
+<div>
 
 <div class="card">
 
@@ -323,14 +344,6 @@ Guardar Partido
 </div>
 
 </div>
-
-</div>
-
-<div class="card" style="margin-top:20px;">
-
-<h2>Partidos</h2>
-
-<div id="historial"></div>
 
 </div>
 
