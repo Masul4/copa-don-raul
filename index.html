@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copa don Raúl</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#0f172a;
+    color:white;
+}
+
+header{
+    background:#111827;
+    padding:20px;
+    text-align:center;
+    border-bottom:2px solid #1e293b;
+}
+
+.container{
+    width:95%;
+    margin:auto;
+    padding:20px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:1.2fr 1fr;
+    gap:20px;
+}
+
+.card{
+    background:#111827;
+    border-radius:16px;
+    padding:20px;
+    box-shadow:0 0 10px rgba(0,0,0,0.3);
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th, td{
+    padding:12px;
+    text-align:center;
+    border-bottom:1px solid #1e293b;
+}
+
+th{
+    background:#1e293b;
+}
+
+.gold{
+    background:#6b5200;
+}
+
+.silver{
+    background:#999b9b;
+}
+
+.equipo-col{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.escudo {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: #000000 !important;
+    border: 2px solid #ffffff !important;
+    object-fit: cover;
+    display: block;
+    box-shadow: 0 0 8px rgba(0,0,0,0.5);
+}
+
+input, select{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border:none;
+    border-radius:8px;
+    background:#1e293b;
+    color:white;
+}
+
+button{
+    padding:10px 15px;
+    border:none;
+    border-radius:8px;
+    background:#2563eb;
+    color:white;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+button:hover{
+    background:#1d4ed8;
+}
+
+.full-btn{
+    width:100%;
+    margin-top:15px;
+}
+
+.partido{
+    background:#1e293b;
+    padding:12px;
+    border-radius:12px;
+    margin-bottom:12px;
+    width:fit-content;
+    min-width:430px;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+.partido:hover{
+    background:#334155;
+    transform:scale(1.02);
+}
+
+.small{
+    font-size:13px;
+    opacity:0.8;
+}
+
+.acciones{
+    display:flex;
+    gap:10px;
+    margin-top:10px;
+}
+
+.deleteBtn{
+    background:#dc2626;
+}
+
+.editBtn{
+    background:#d97706;
+}
+
+#modoContainer{
+    padding:10px;
+    background:#111827;
+    text-align:center;
+}
+
+#modoContainer button{
+    margin:0 5px;
+}
+
+.modal{
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.8);
+    padding:40px;
+    overflow:auto;
+    z-index:999;
+}
+
+.modal-content{
+    background:#111827;
+    max-width:900px;
+    margin:auto;
+    padding:25px;
+    border-radius:16px;
+}
+
+.goleador{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#1e293b;
+    padding:10px;
+    border-radius:10px;
+    margin-bottom:10px;
+}
+
+.goleador-info{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex:1;
+}
+
+.goleador-info img{
+    width:56px;
+    height:56px;
+    flex-shrink:0;
+}
+
+.goleador-texto{
+    display:flex;
+    flex-direction:column;
+}
+
+#syncStatus {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-left: 10px;
+    display: inline-block;
+}
+
+.sync-ok { background: #16a34a; }
+.sync-loading { background: #d97706; }
+.sync-error { background: #dc2626; }
+
+@media(max-width:900px){
+
+    .grid{
+        grid-template-columns:1fr;
+    }
+
+    .partido{
+        min-width:100%;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="modoContainer">
+    <button onclick="activarAdmin()">Modo Admin</button>
+    <button onclick="activarVista()">Modo Visualización</button>
+    <span id="syncStatus" class="sync-loading">⏳ Conectando...</span>
+</div>
+
+<header>
+    <h1>🏆 Copa don Raúl</h1>
+</header>
+
+<div class="container">
+
+<div class="grid">
+
+<div class="card">
+
+<h2>Tabla</h2>
+
+<table>
+
+<thead>
+<tr>
+<th>#</th>
+<th>Club</th>
+<th>PJ</th>
+<th>G</th>
+<th>E</th>
+<th>P</th>
+<th>GF</th>
+<th>GC</th>
+<th>DG</th>
+<th>PTS</th>
+</tr>
+</thead>
+
+<tbody id="tablaBody"></tbody>
+
+</table>
+
+</div>
+
+<div>
+
+<div class="card admin-only">
+
+<h2>Ingresar Resultado</h2>
+
+<select id="equipo1"></select>
+
+<input type="number" id="gol1" placeholder="Goles equipo 1">
+
+<select id="equipo2"></select>
+
+<input type="number" id="gol2" placeholder="Goles equipo 2">
+
+<div id="penalesDiv" style="display:none; margin-top:10px;">
+
+<p class="small">
+Empate → elegir ganador por penales
+</p>
+
+<select id="ganadorPenales"></select>
+
+</div>
+
+<button class="full-btn" onclick="guardarPartido()">
+Guardar Partido
+</button>
+
+</div>
+
+<div class="card admin-only" style="margin-top:20px;">
+
+<h2>Escudos</h2>
+
+<div id="escudosContainer"></div>
+
+</div>
+
+<div class="card">
+
+<h2>Goleadores</h2>
+
+<div id="tablaGoleadores"></div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="card" style="margin-top:20px;">
+
+<h2>Partidos</h2>
+
+<div id="historial"></div>
+
+</div>
+
+</div>
+
+<div id="modalGoles" class="modal">
+
+<div class="modal-content">
+
+<h2>Goles del partido</h2>
+
+<div id="contenidoGoles"></div>
+
+<button style="margin-top:20px;" onclick="cerrarModal()">
+Cerrar
+</button>
+
+</div>
+
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import {
+    getFirestore,
+    doc,
+    getDoc,
+    setDoc,
+    onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+// ── Configuración Firebase ──────────────────────────────────────────
+const firebaseConfig = {
+    apiKey: "AIzaSyD0ke3iRdmHSIo9L4C9-XoGnXunN1qG71g",
+    authDomain: "copa-don-raul.firebaseapp.com",
+    projectId: "copa-don-raul",
+    storageBucket: "copa-don-raul.firebasestorage.app",
+    messagingSenderId: "401178394920",
+    appId: "1:401178394920:web:b0f5b4cddaf50dc0da101d"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── Referencias a documentos en Firestore ──────────────────────────
+const refPartidos = doc(db, "copa", "partidos");
+const refEscudos  = doc(db, "copa", "escudos");
+
+// ── Helpers de estado ──────────────────────────────────────────────
+function setSyncStatus(estado){
+    const el = document.getElementById("syncStatus");
+    if(estado === "ok"){
+        el.textContent = "✅ Sincronizado";
+        el.className = "sync-ok";
+    } else if(estado === "loading"){
+        el.textContent = "⏳ Guardando...";
+        el.className = "sync-loading";
+    } else {
+        el.textContent = "❌ Error de conexión";
+        el.className = "sync-error";
+    }
+}
+
+// ── Guardar en Firestore ───────────────────────────────────────────
+async function guardarDatos(){
+    setSyncStatus("loading");
+    try {
+        await setDoc(refPartidos, { lista: partidos });
+        await setDoc(refEscudos,  { mapa: escudos  });
+        setSyncStatus("ok");
+    } catch(e){
+        console.error(e);
+        setSyncStatus("error");
+    }
+}
+
+// ── Escuchar cambios en tiempo real ───────────────────────────────
+function escucharCambios(){
+    // Partidos
+    onSnapshot(refPartidos, (snap) => {
+        if(snap.exists()){
+            partidos = snap.data().lista || [];
+        } else {
+            partidos = [];
+        }
+        recalcularTabla();
+        setSyncStatus("ok");
+    }, () => setSyncStatus("error"));
+
+    // Escudos
+    onSnapshot(refEscudos, (snap) => {
+        if(snap.exists()){
+            escudos = snap.data().mapa || {};
+        } else {
+            escudos = {};
+        }
+        renderEscudos();
+        actualizarTabla();
+        actualizarHistorial();
+        actualizarGoleadores();
+    }, () => setSyncStatus("error"));
+}
+
+// ── Datos globales ─────────────────────────────────────────────────
+const equiposBase = [
+    "GeoLock",
+    "Roca juniors",
+    "PSGeo",
+    "Georgia",
+    "Aston Birra",
+    "Tierra 2",
+    "Wackstone",
+    "Inter de Milonitas"
+];
+
+const ESCUDO_DEFAULT = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+
+let equipos  = [];
+let partidos = [];
+let escudos  = {};
+let editando = -1;
+let admin    = false;
+
+// ── Equipos ────────────────────────────────────────────────────────
+function iniciarEquipos(){
+    equipos = equiposBase.map(nombre => ({
+        nombre, PJ:0, G:0, E:0, P:0, GF:0, GC:0, DG:0, PTS:0
+    }));
+}
+
+function llenarSelects(){
+    const e1     = document.getElementById("equipo1");
+    const e2     = document.getElementById("equipo2");
+    const penales = document.getElementById("ganadorPenales");
+
+    e1.innerHTML = "";
+    e2.innerHTML = "";
+    penales.innerHTML = "";
+
+    equiposBase.forEach(nombre => {
+        const opt = `<option value="${nombre}">${nombre}</option>`;
+        e1.innerHTML      += opt;
+        e2.innerHTML      += opt;
+        penales.innerHTML += opt;
+    });
+}
+
+// ── Escudos ────────────────────────────────────────────────────────
+function renderEscudos(){
+    const container = document.getElementById("escudosContainer");
+    container.innerHTML = "";
+
+    equiposBase.forEach(eq => {
+        container.innerHTML += `
+        <div style="margin-bottom:20px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                <img id="escudo-${eq}" src="${escudos[eq] || ESCUDO_DEFAULT}" class="escudo">
+                <span>${eq}</span>
+            </div>
+            <input type="file" accept="image/*" onchange="subirEscudo(event,'${eq}')">
+        </div>`;
+    });
+}
+
+window.subirEscudo = function(event, equipo){
+    const file = event.target.files[0];
+    if(!file) return;
+
+    const img    = new Image();
+    const reader = new FileReader();
+
+    reader.onload = e => { img.src = e.target.result; };
+
+    img.onload = function(){
+        const canvas = document.createElement("canvas");
+        const ctx    = canvas.getContext("2d");
+        const size   = 200;
+        canvas.width  = size;
+        canvas.height = size;
+        ctx.drawImage(img, 0, 0, size, size);
+        const compressed = canvas.toDataURL("image/jpeg", 0.7);
+
+        escudos[equipo] = compressed;
+
+        guardarDatos();
+        renderEscudos();
+        actualizarTabla();
+        actualizarHistorial();
+        actualizarGoleadores();
+
+        alert("Escudo actualizado correctamente");
+    };
+
+    reader.readAsDataURL(file);
+};
+
+// ── Tabla ──────────────────────────────────────────────────────────
+function recalcularTabla(){
+    iniciarEquipos();
+
+    partidos.forEach(p => {
+        const e1 = equipos.find(e => e.nombre === p.equipo1);
+        const e2 = equipos.find(e => e.nombre === p.equipo2);
+        if(!e1 || !e2) return;
+
+        e1.PJ++; e2.PJ++;
+        e1.GF += p.g1; e1.GC += p.g2;
+        e2.GF += p.g2; e2.GC += p.g1;
+
+        if(p.g1 > p.g2){
+            e1.G++; e2.P++; e1.PTS += 3;
+        } else if(p.g2 > p.g1){
+            e2.G++; e1.P++; e2.PTS += 3;
+        } else {
+            e1.E++; e2.E++;
+            if(p.ganadorPenales === p.equipo1){
+                e1.PTS += 2; e2.PTS += 1;
+            } else {
+                e2.PTS += 2; e1.PTS += 1;
+            }
+        }
+    });
+
+    equipos.forEach(e => { e.DG = e.GF - e.GC; });
+
+    equipos.sort((a,b) =>
+        b.PTS - a.PTS || b.DG - a.DG || b.GF - a.GF
+    );
+
+    actualizarTabla();
+    actualizarHistorial();
+    actualizarGoleadores();
+}
+
+function actualizarTabla(){
+    const body = document.getElementById("tablaBody");
+    body.innerHTML = "";
+
+    equipos.forEach((e, index) => {
+        const clase = index < 4 ? "gold" : "silver";
+        body.innerHTML += `
+        <tr class="${clase}">
+            <td>${index+1}</td>
+            <td>
+                <div class="equipo-col">
+                    <img src="${escudos[e.nombre] || ESCUDO_DEFAULT}" class="escudo">
+                    <span>${e.nombre}</span>
+                </div>
+            </td>
+            <td>${e.PJ}</td>
+            <td>${e.G}</td>
+            <td>${e.E}</td>
+            <td>${e.P}</td>
+            <td>${e.GF}</td>
+            <td>${e.GC}</td>
+            <td>${e.DG > 0 ? "+"+e.DG : e.DG}</td>
+            <td><b>${e.PTS}</b></td>
+        </tr>`;
+    });
+}
+
+// ── Historial ──────────────────────────────────────────────────────
+function actualizarHistorial(){
+    const historial = document.getElementById("historial");
+    historial.innerHTML = "";
+
+    if(partidos.length === 0){
+        historial.innerHTML = "<p>No hay partidos aún.</p>";
+        return;
+    }
+
+    partidos.slice().reverse().forEach((p, index) => {
+        const realIndex = partidos.length - 1 - index;
+
+        historial.innerHTML += `
+        <div class="partido" onclick="verGoles(${realIndex})">
+            <div style="display:flex; align-items:center; justify-content:center; gap:14px; font-size:18px; font-weight:bold;">
+
+                <div style="display:flex; align-items:center; gap:10px; width:170px; justify-content:flex-end;">
+                    <span>${p.equipo1}</span>
+                    <img src="${escudos[p.equipo1] || ESCUDO_DEFAULT}" class="escudo">
+                </div>
+
+                <div style="background:#0f172a; padding:8px 14px; border-radius:10px; min-width:90px; text-align:center;">
+                    ${p.g1} - ${p.g2}
+                </div>
+
+                <div style="display:flex; align-items:center; gap:10px; width:170px;">
+                    <img src="${escudos[p.equipo2] || ESCUDO_DEFAULT}" class="escudo">
+                    <span>${p.equipo2}</span>
+                </div>
+
+            </div>
+
+            <div class="acciones admin-only">
+                <button class="editBtn"   onclick="event.stopPropagation(); editarPartido(${realIndex})">Editar</button>
+                <button class="deleteBtn" onclick="event.stopPropagation(); eliminarPartido(${realIndex})">🗑</button>
+            </div>
+        </div>`;
+    });
+
+    if(!admin){
+        document.querySelectorAll(".admin-only").forEach(el => el.style.display = "none");
+    }
+}
+
+// ── Goleadores ─────────────────────────────────────────────────────
+function actualizarGoleadores(){
+    const tabla = document.getElementById("tablaGoleadores");
+    let goleadores = {};
+
+    partidos.forEach(p => {
+        if(!p.goles) return;
+        p.goles.forEach(g => {
+            if(g.ownGoal) return;
+            if(!goleadores[g.jugador]){
+                goleadores[g.jugador] = { goles:0, equipo:g.equipo };
+            }
+            goleadores[g.jugador].goles += (g.cantidad || 1);
+        });
+    });
+
+    const ordenados = Object.entries(goleadores).sort((a,b) => b[1].goles - a[1].goles);
+
+    tabla.innerHTML = "";
+
+    if(ordenados.length === 0){
+        tabla.innerHTML = "<p>No hay goleadores aún.</p>";
+        return;
+    }
+
+    let posicion = 0, ultimoGoles = null, salto = 0;
+
+    ordenados.forEach(([nombre, data], index) => {
+        if(ultimoGoles === null || data.goles < ultimoGoles){
+            posicion = index + 1;
+            salto = posicion;
+        } else {
+            posicion = salto;
+        }
+        ultimoGoles = data.goles;
+
+        tabla.innerHTML += `
+        <div class="goleador">
+            <div style="font-size:18px; font-weight:bold; width:40px;">#${posicion}</div>
+            <div class="goleador-info">
+                <img src="${escudos[data.equipo] || ESCUDO_DEFAULT}" class="escudo">
+                <div class="goleador-texto">
+                    <div><b>${nombre}</b></div>
+                    <div class="small">${data.equipo}</div>
+                </div>
+            </div>
+            <div style="font-size:22px; font-weight:bold;">${data.goles}</div>
+        </div>`;
+    });
+}
+
+// ── Formulario de partido ──────────────────────────────────────────
+window.revisarEmpate = function(){
+    const g1 = document.getElementById("gol1").value;
+    const g2 = document.getElementById("gol2").value;
+
+    if(g1 !== "" && g2 !== "" && Number(g1) === Number(g2)){
+        document.getElementById("penalesDiv").style.display = "block";
+    } else {
+        document.getElementById("penalesDiv").style.display = "none";
+    }
+};
+
+window.guardarPartido = async function(){
+    const equipo1 = document.getElementById("equipo1").value;
+    const equipo2 = document.getElementById("equipo2").value;
+    const g1 = Number(document.getElementById("gol1").value);
+    const g2 = Number(document.getElementById("gol2").value);
+
+    if(
+        document.getElementById("gol1").value === "" ||
+        document.getElementById("gol2").value === ""
+    ){
+        alert("Ingresa los goles");
+        return;
+    }
+
+    if(equipo1 === equipo2){
+        alert("No puedes elegir el mismo equipo");
+        return;
+    }
+
+    let ganadorPenales = "";
+    if(g1 === g2){
+        ganadorPenales = document.getElementById("ganadorPenales").value;
+    }
+
+    const partido = { equipo1, equipo2, g1, g2, ganadorPenales, goles:[] };
+
+    if(editando === -1){
+        partidos.push(partido);
+    } else {
+        partido.goles = partidos[editando].goles || [];
+        partidos[editando] = partido;
+        editando = -1;
+    }
+
+    limpiarFormulario();
+    await guardarDatos();
+    recalcularTabla();
+};
+
+window.editarPartido = function(index){
+    const p = partidos[index];
+    document.getElementById("equipo1").value = p.equipo1;
+    document.getElementById("equipo2").value = p.equipo2;
+    document.getElementById("gol1").value    = p.g1;
+    document.getElementById("gol2").value    = p.g2;
+
+    revisarEmpate();
+
+    if(p.g1 === p.g2){
+        document.getElementById("ganadorPenales").value = p.ganadorPenales;
+    }
+
+    editando = index;
+    window.scrollTo({ top:0, behavior:'smooth' });
+};
+
+window.eliminarPartido = async function(index){
+    if(confirm("¿Eliminar partido?")){
+        partidos.splice(index, 1);
+        await guardarDatos();
+        recalcularTabla();
+    }
+};
+
+function limpiarFormulario(){
+    document.getElementById("gol1").value = "";
+    document.getElementById("gol2").value = "";
+    document.getElementById("penalesDiv").style.display = "none";
+    editando = -1;
+}
+
+// ── Modal de goles ─────────────────────────────────────────────────
+window.verGoles = function(index){
+    const p = partidos[index];
+    let golesIzq = "";
+    let golesDer = "";
+
+    if(p.goles && p.goles.length > 0){
+        p.goles.forEach(g => {
+            if(g.jugador.toUpperCase() === "GEC") return;
+            const emoji = "⚽ ".repeat(g.cantidad || 1);
+            const bloque = `
+            <div style="background:#1e293b; padding:10px; border-radius:10px; margin-bottom:10px; ${g.equipo === p.equipo2 ? "text-align:right;" : ""}">
+                ${g.jugador}${g.ownGoal ? " (GEC)" : ""} ${emoji}
+            </div>`;
+
+            if(g.equipo === p.equipo1){
+                golesIzq += bloque;
+            } else {
+                golesDer += bloque;
+            }
+        });
+    } else {
+        golesIzq = "<div class='small'>Sin goles registrados</div>";
+    }
+
+    let html = `
+    <h3 style="text-align:center; margin-bottom:25px;">
+        ${p.equipo1} ${p.g1} - ${p.g2} ${p.equipo2}
+    </h3>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:40px;">
+        <div>
+            <h3>${p.equipo1}</h3>
+            ${golesIzq}
+        </div>
+        <div>
+            <h3 style="text-align:right;">${p.equipo2}</h3>
+            ${golesDer}
+        </div>
+    </div>`;
+
+    if(admin){
+        html += `
+        <hr style="margin:25px 0;">
+        <button onclick="agregarGol(${index}, '${p.equipo1}')">+ Gol ${p.equipo1}</button>
+        <button style="margin-top:10px;" onclick="agregarGol(${index}, '${p.equipo2}')">+ Gol ${p.equipo2}</button>`;
+    }
+
+    document.getElementById("contenidoGoles").innerHTML = html;
+    document.getElementById("modalGoles").style.display = "block";
+};
+
+window.agregarGol = async function(index, equipo){
+    const input = prompt("Jugador (puedes usar: Nombre (GEC) para autogol)");
+    if(!input) return;
+
+    const cantidad = Number(prompt("Cantidad de goles", "1"));
+    if(!cantidad || cantidad <= 0) return;
+
+    let jugador = input.trim();
+    let ownGoal = false;
+
+    if(jugador.toUpperCase().includes("(GEC)")){
+        ownGoal = true;
+        jugador = jugador.replace(/\(GEC\)/gi, "").trim();
+    }
+
+    partidos[index].goles.push({ jugador, equipo, cantidad, ownGoal });
+
+    await guardarDatos();
+    actualizarGoleadores();
+    verGoles(index);
+};
+
+window.cerrarModal = function(){
+    document.getElementById("modalGoles").style.display = "none";
+};
+
+// ── Admin / Vista ──────────────────────────────────────────────────
+window.activarVista = function(){
+    admin = false;
+    document.querySelectorAll(".admin-only").forEach(el => el.style.display = "none");
+};
+
+window.activarAdmin = function(){
+    const pass = prompt("Contraseña admin");
+    if(pass === "altamarino"){
+        admin = true;
+        document.querySelectorAll(".admin-only").forEach(el => el.style.display = "block");
+    } else {
+        alert("Contraseña incorrecta");
+    }
+};
+
+// ── Eventos ────────────────────────────────────────────────────────
+document.getElementById("gol1").addEventListener("input", revisarEmpate);
+document.getElementById("gol2").addEventListener("input", revisarEmpate);
+
+// ── Inicio ─────────────────────────────────────────────────────────
+iniciarEquipos();
+llenarSelects();
+renderEscudos();
+activarVista();
+escucharCambios(); // Arranca la escucha en tiempo real
+
+</script>
+
+</body>
+</html>
