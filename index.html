@@ -47,8 +47,9 @@ header{
 .card{
     background:#111827;
     border-radius:16px;
-    padding:20px;
+    padding:14px 16px;
     box-shadow:0 0 10px rgba(0,0,0,0.3);
+    border:2px solid #334155;
 }
 
 table{
@@ -57,7 +58,7 @@ table{
 }
 
 th, td{
-    padding:12px;
+    padding:8px 10px;
     text-align:center;
     border-bottom:1px solid #1e293b;
 }
@@ -76,16 +77,23 @@ th{
     overflow:hidden;
 }
 
+.card h2 {
+    margin: 0 0 14px 0;
+}
+#creadorBar {
+    background:#0f172a;
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    padding:8px 16px;
+    border-bottom:1px solid #1e293b;
+}
+
 #creador{
     text-decoration:none;
-    position:absolute;
-    top:50%;
-    right:16px;
-    transform:translateY(-50%);
     font-size:14px;
     opacity:0.85;
     color:white;
-    z-index:10;
     display:flex;
     align-items:center;
     gap:7px;
@@ -98,10 +106,6 @@ th{
 }
 #creador:hover{
     opacity:1;
-}
-
-header{
-    position:relative;
 }
 
 .silver{
@@ -314,6 +318,55 @@ button:hover{
     width:100%;
 }
 
+/* ── Fila de tabla clickeable ── */
+#tablaBody tr {
+    cursor: pointer;
+    transition: filter 0.15s;
+}
+#tablaBody tr:hover {
+    filter: brightness(1.25);
+}
+
+/* ── Modal historial equipo ── */
+.partido-historial {
+    background:#1e293b;
+    border-radius:12px;
+    padding:14px 16px;
+    margin-bottom:12px;
+    cursor:pointer;
+    transition:0.2s;
+}
+.partido-historial:hover {
+    background:#334155;
+}
+.partido-historial .marcador {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    font-size:16px;
+    font-weight:bold;
+    flex-wrap:wrap;
+}
+.partido-historial .resultado-badge {
+    font-size:11px;
+    font-weight:bold;
+    padding:3px 9px;
+    border-radius:20px;
+    letter-spacing:0.05em;
+}
+.badge-g  { background:#16a34a; }
+.badge-e  { background:#d97706; }
+.badge-p  { background:#dc2626; }
+
+.goles-detalle {
+    display:none;
+    margin-top:12px;
+    padding-top:10px;
+    border-top:1px solid #334155;
+}
+.goles-detalle.abierto { display:block; }
+
 </style>
 </head>
 
@@ -327,13 +380,17 @@ button:hover{
 
 <header>
     <h1>🏆 Copa Don Raúl</h1>
-    <a id="creador" href="https://instagram.com/m4sul" target="_blank">
-    Creado por @m4sul
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" style="flex-shrink:0;">
-        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-    </svg>
-</a>
 </header>
+
+<!-- Botón creador en su propia barra, fuera del header -->
+<div id="creadorBar">
+    <a id="creador" href="https://instagram.com/m4sul" target="_blank">
+        Creado por @m4sul
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" style="flex-shrink:0;">
+            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+        </svg>
+    </a>
+</div>
 
 <div class="container">
 
@@ -352,15 +409,17 @@ button:hover{
 <thead>
 <tr>
 <th>#</th>
-<th>Club</th>
+<th>Equipo</th>
 <th>PJ</th>
 <th>G</th>
-<th>E</th>
+<th>E<sub>g</sub></th>
+<th>E<sub>p</sub></th>
 <th>P</th>
 <th>GF</th>
 <th>GC</th>
 <th>DG</th>
 <th>PTS</th>
+<th>Últ. 3</th>
 </tr>
 </thead>
 
@@ -404,11 +463,17 @@ button:hover{
 
 <div id="penalesDiv" style="display:none; margin-top:10px;">
 
-<p class="small">
-Empate → elegir ganador por penales
+<p class="small" style="margin:0 0 10px 0;">
+Empate → ingresa el resultado de penales
 </p>
 
-<select id="ganadorPenales"></select>
+<div style="display:flex; align-items:center; gap:8px;">
+    <span id="pen1Label" style="flex:1; font-size:13px; text-align:right; opacity:0.8;"></span>
+    <input type="number" id="pen1" placeholder="0" min="0" max="50" style="width:70px; flex:none; text-align:center;">
+    <span style="opacity:0.5;">-</span>
+    <input type="number" id="pen2" placeholder="0" min="0" max="50" style="width:70px; flex:none; text-align:center;">
+    <span id="pen2Label" style="flex:1; font-size:13px; opacity:0.8;"></span>
+</div>
 
 </div>
 
@@ -449,6 +514,7 @@ Guardar Partido
 
 </div>
 
+<!-- Modal goles partido -->
 <div id="modalGoles" class="modal">
 <div class="modal-content">
 <h2>Goles del partido</h2>
@@ -457,6 +523,7 @@ Guardar Partido
 </div>
 </div>
 
+<!-- Modal editar partido -->
 <div id="modalEditar" class="modal">
 <div class="modal-content">
 <h2>✏️ Editar Partido</h2>
@@ -465,6 +532,21 @@ Guardar Partido
     <button onclick="guardarEdicionCompleta()" style="flex:1; background:#16a34a;">💾 Guardar cambios</button>
     <button onclick="cerrarModalEditar()" style="flex:1; background:#6b7280;">Cancelar</button>
 </div>
+</div>
+</div>
+
+<!-- Modal historial equipo -->
+<div id="modalHistorialEquipo" class="modal">
+<div class="modal-content">
+    <div style="display:flex; align-items:center; gap:14px; margin-bottom:20px;">
+        <img id="historialEscudo" class="escudo" style="width:64px;height:64px;">
+        <div>
+            <h2 id="historialNombreEquipo" style="margin:0;"></h2>
+            <div id="historialResumen" style="font-size:13px; opacity:0.7; margin-top:4px;"></div>
+        </div>
+    </div>
+    <div id="historialPartidosEquipo"></div>
+    <button style="margin-top:20px;" onclick="cerrarModalHistorial()">Cerrar</button>
 </div>
 </div>
 
@@ -480,7 +562,6 @@ import {
     onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
-// ── Configuración Firebase ──────────────────────────────────────────
 const firebaseConfig = {
     apiKey: "AIzaSyD0ke3iRdmHSIo9L4C9-XoGnXunN1qG71g",
     authDomain: "copa-don-raul.firebaseapp.com",
@@ -493,11 +574,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
-// ── Referencias a documentos en Firestore ──────────────────────────
 const refPartidos = doc(db, "copa", "partidos");
 const refEscudos  = doc(db, "copa", "escudos");
 
-// ── Helpers de estado ──────────────────────────────────────────────
 function setSyncStatus(estado){
     const el = document.getElementById("syncStatus");
     if(estado === "ok"){
@@ -512,7 +591,6 @@ function setSyncStatus(estado){
     }
 }
 
-// ── Guardar en Firestore ───────────────────────────────────────────
 async function guardarDatos(){
     setSyncStatus("loading");
     try {
@@ -525,9 +603,7 @@ async function guardarDatos(){
     }
 }
 
-// ── Escuchar cambios en tiempo real ───────────────────────────────
 function escucharCambios(){
-    // Partidos
     onSnapshot(refPartidos, (snap) => {
         if(snap.exists()){
             partidos = snap.data().lista || [];
@@ -538,20 +614,18 @@ function escucharCambios(){
         setSyncStatus("ok");
     }, () => setSyncStatus("error"));
 
-    // Escudos
     onSnapshot(refEscudos, (snap) => {
         if(snap.exists()){
             escudos = snap.data().mapa || {};
         } else {
             escudos = {};
         }
-                actualizarTabla();
+        actualizarTabla();
         actualizarHistorial();
         actualizarGoleadores();
     }, () => setSyncStatus("error"));
 }
 
-// ── Datos globales ─────────────────────────────────────────────────
 const equiposBase = [
     "GeoLock",
     "Roca juniors",
@@ -572,31 +646,26 @@ let editando = -1;
 let admin    = false;
 let fechaActiva = 1;
 
-// ── Equipos ────────────────────────────────────────────────────────
 function iniciarEquipos(){
     equipos = equiposBase.map(nombre => ({
-        nombre, PJ:0, G:0, E:0, P:0, GF:0, GC:0, DG:0, PTS:0
+        nombre, PJ:0, G:0, E:0, Eg:0, Ep:0, P:0, GF:0, GC:0, DG:0, PTS:0
     }));
 }
 
 function llenarSelects(){
-    const e1     = document.getElementById("equipo1");
-    const e2     = document.getElementById("equipo2");
-    const penales = document.getElementById("ganadorPenales");
+    const e1      = document.getElementById("equipo1");
+    const e2      = document.getElementById("equipo2");
 
     e1.innerHTML = "";
     e2.innerHTML = "";
-    penales.innerHTML = "";
 
     equiposBase.forEach(nombre => {
         const opt = `<option value="${nombre}">${nombre}</option>`;
-        e1.innerHTML      += opt;
-        e2.innerHTML      += opt;
-        penales.innerHTML += opt;
+        e1.innerHTML += opt;
+        e2.innerHTML += opt;
     });
 }
 
-// ── Escudos ──────────────────────────────────────────────────────
 window.subirEscudo = function(event, equipo){
     const file = event.target.files[0];
     if(!file) return;
@@ -618,7 +687,7 @@ window.subirEscudo = function(event, equipo){
         escudos[equipo] = compressed;
 
         guardarDatos();
-                actualizarTabla();
+        actualizarTabla();
         actualizarHistorial();
         actualizarGoleadores();
 
@@ -628,7 +697,6 @@ window.subirEscudo = function(event, equipo){
     reader.readAsDataURL(file);
 };
 
-// ── Tabla ──────────────────────────────────────────────────────────
 function recalcularTabla(){
     iniciarEquipos();
 
@@ -648,8 +716,10 @@ function recalcularTabla(){
         } else {
             e1.E++; e2.E++;
             if(p.ganadorPenales === p.equipo1){
+                e1.Eg++; e2.Ep++;
                 e1.PTS += 2; e2.PTS += 1;
             } else {
+                e2.Eg++; e1.Ep++;
                 e2.PTS += 2; e1.PTS += 1;
             }
         }
@@ -672,8 +742,32 @@ function actualizarTabla(){
 
     equipos.forEach((e, index) => {
         const clase = index < 4 ? "gold" : "silver";
+
+        // Calcular últimos 3 partidos para este equipo
+        const ultimos = partidos
+            .filter(p => p.equipo1 === e.nombre || p.equipo2 === e.nombre)
+            .slice(-3);
+
+        let iconosUlt = "";
+        ultimos.forEach(p => {
+            const esE1 = p.equipo1 === e.nombre;
+            const gF   = esE1 ? p.g1 : p.g2;
+            const gC   = esE1 ? p.g2 : p.g1;
+            let icono;
+            if(gF > gC){
+                icono = `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#16a34a;font-size:11px;font-weight:bold;">✓</span>`;
+            } else if(gF < gC){
+                icono = `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#dc2626;font-size:11px;font-weight:bold;">✕</span>`;
+            } else {
+                // empate: ganó o perdió penales
+                const gano = p.ganadorPenales === e.nombre;
+                icono = `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${gano?"#16a34a":"#dc2626"};font-size:11px;font-weight:bold;">${gano?"✓":"✕"}</span>`;
+            }
+            iconosUlt += icono;
+        });
+
         body.innerHTML += `
-        <tr class="${clase}">
+        <tr class="${clase}" onclick="verHistorialEquipo('${e.nombre}')" title="Ver historial de ${e.nombre}">
             <td>${index+1}</td>
             <td>
                 <div class="equipo-col">
@@ -683,17 +777,137 @@ function actualizarTabla(){
             </td>
             <td>${e.PJ}</td>
             <td>${e.G}</td>
-            <td>${e.E}</td>
+            <td>${e.Eg}</td>
+            <td>${e.Ep}</td>
             <td>${e.P}</td>
             <td>${e.GF}</td>
             <td>${e.GC}</td>
             <td>${e.DG > 0 ? "+"+e.DG : e.DG}</td>
             <td><b>${e.PTS}</b></td>
+            <td><div style="display:flex;gap:3px;justify-content:center;align-items:center;">${iconosUlt}</div></td>
         </tr>`;
     });
 }
 
-// ── Historial ──────────────────────────────────────────────────────
+// ── Historial de equipo ────────────────────────────────────────────
+window.verHistorialEquipo = function(nombre){
+    const partidosEquipo = partidos
+        .map((p, i) => ({ ...p, _idx: i }))
+        .filter(p => p.equipo1 === nombre || p.equipo2 === nombre);
+
+    const eq = equipos.find(e => e.nombre === nombre);
+
+    document.getElementById("historialEscudo").src = escudos[nombre] || ESCUDO_DEFAULT;
+    document.getElementById("historialNombreEquipo").textContent = nombre;
+    document.getElementById("historialResumen").textContent =
+        eq ? `${eq.PJ} PJ · ${eq.G} G · ${eq.Eg} Eg · ${eq.Ep} Ep · ${eq.P} P · ${eq.GF} GF · ${eq.GC} GC · ${eq.PTS} PTS` : "";
+
+    const contenedor = document.getElementById("historialPartidosEquipo");
+    contenedor.innerHTML = "";
+
+    if(partidosEquipo.length === 0){
+        contenedor.innerHTML = "<p style='opacity:0.6; text-align:center; padding:20px;'>Sin partidos jugados.</p>";
+        document.getElementById("modalHistorialEquipo").style.display = "block";
+        return;
+    }
+
+    partidosEquipo.forEach(p => {
+        // Respetar orden original: equipo1 siempre a la izquierda, equipo2 a la derecha
+        const esLocal = p.equipo1 === nombre;
+
+        // Resultado desde la perspectiva del equipo seleccionado
+        const gF = esLocal ? p.g1 : p.g2;
+        const gC = esLocal ? p.g2 : p.g1;
+        let resultado, badgeClass;
+        if(gF > gC){
+            resultado = "G"; badgeClass = "badge-g";
+        } else if(gF < gC){
+            resultado = "P"; badgeClass = "badge-p";
+        } else {
+            const ganoPenales = p.ganadorPenales === nombre;
+            resultado = ganoPenales ? "Eg" : "Ep";
+            badgeClass = "badge-e";
+        }
+
+        const divId = `histo_${p._idx}`;
+
+        // Goles: equipo1 siempre izquierda, equipo2 siempre derecha (orden original del partido)
+        let golesIzqH = "";
+        let golesDerH = "";
+        if(p.goles && p.goles.length > 0){
+            p.goles.forEach(g => {
+                if(g.jugador.toUpperCase() === "GEC") return;
+                const emojis = "⚽ ".repeat(g.cantidad || 1).trim();
+                const label  = `${g.jugador}${g.ownGoal ? " (GEC)" : ""}`;
+                if(g.equipo === p.equipo1){
+                    golesIzqH += `
+                    <div style="display:flex; align-items:center; justify-content:space-between; background:#0f172a; border:1px solid #334155; padding:8px 12px; border-radius:10px; margin-bottom:6px; gap:8px;">
+                        <span style="font-weight:600; font-size:13px;">${label}</span>
+                        <span style="font-size:14px; letter-spacing:2px;">${emojis}</span>
+                    </div>`;
+                } else {
+                    golesDerH += `
+                    <div style="display:flex; align-items:center; justify-content:space-between; background:#0f172a; border:1px solid #334155; padding:8px 12px; border-radius:10px; margin-bottom:6px; gap:8px;">
+                        <span style="font-size:14px; letter-spacing:2px;">${emojis}</span>
+                        <span style="font-weight:600; font-size:13px;">${label}</span>
+                    </div>`;
+                }
+            });
+        }
+        if(!golesIzqH) golesIzqH = `<div style="opacity:0.4; font-size:12px; padding:4px 0;">Sin goles</div>`;
+        if(!golesDerH) golesDerH = `<div style="opacity:0.4; font-size:12px; padding:4px 0; text-align:right;">Sin goles</div>`;
+
+        contenedor.innerHTML += `
+        <div class="partido-historial" onclick="toggleGolesHistorial('${divId}')">
+            <div class="marcador">
+                <span class="resultado-badge ${badgeClass}">${resultado}</span>
+
+                <div style="display:flex; align-items:center; gap:8px; flex:1; justify-content:flex-end;">
+                    <span style="font-size:13px; text-align:right;">${p.equipo1}</span>
+                    <img src="${escudos[p.equipo1] || ESCUDO_DEFAULT}" class="escudo" style="width:36px;height:36px;">
+                </div>
+
+                <div style="background:#0f172a; padding:5px 12px; border-radius:10px; font-size:17px; white-space:nowrap; text-align:center;">
+                    ${p.g1} - ${p.g2}
+                    ${p.ganadorPenales ? `<div style="font-size:11px; opacity:0.6;">(${p.pen1 ?? '?'}-${p.pen2 ?? '?'} pen.)</div>` : ""}
+                </div>
+
+                <div style="display:flex; align-items:center; gap:8px; flex:1;">
+                    <img src="${escudos[p.equipo2] || ESCUDO_DEFAULT}" class="escudo" style="width:36px;height:36px;">
+                    <span style="font-size:13px;">${p.equipo2}</span>
+                </div>
+
+                <span style="font-size:11px; opacity:0.5;">Fecha ${p.fecha || 1}</span>
+            </div>
+
+            <div class="goles-detalle" id="${divId}">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:4px;">
+                    <div>
+                        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; opacity:0.5; margin-bottom:8px;">${p.equipo1}</div>
+                        ${golesIzqH}
+                    </div>
+                    <div>
+                        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; opacity:0.5; margin-bottom:8px; text-align:right;">${p.equipo2}</div>
+                        ${golesDerH}
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    });
+
+    document.getElementById("modalHistorialEquipo").style.display = "block";
+};
+
+window.toggleGolesHistorial = function(id){
+    const el = document.getElementById(id);
+    if(el) el.classList.toggle("abierto");
+};
+
+window.cerrarModalHistorial = function(){
+    document.getElementById("modalHistorialEquipo").style.display = "none";
+};
+
+// ── Tabs de fechas ─────────────────────────────────────────────────
 function renderFechasTabs(){
     const tabs = document.getElementById("fechasTabs");
     if(!tabs) return;
@@ -740,7 +954,7 @@ function actualizarHistorial(){
                 </div>
 
                 <div style="background:#0f172a; padding:6px 12px; border-radius:10px; white-space:nowrap; font-size:18px;">
-                    ${p.g1} - ${p.g2}
+                    ${p.g1} - ${p.g2}${p.ganadorPenales ? `<span style="font-size:12px; opacity:0.6; margin-left:4px;">(${p.pen1 ?? '?'}-${p.pen2 ?? '?'} pen.)</span>` : ""}
                 </div>
 
                 <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
@@ -822,6 +1036,8 @@ window.revisarEmpate = function(){
 
     if(g1 !== "" && g2 !== "" && Number(g1) === Number(g2)){
         document.getElementById("penalesDiv").style.display = "block";
+        document.getElementById("pen1Label").textContent = document.getElementById("equipo1").value;
+        document.getElementById("pen2Label").textContent = document.getElementById("equipo2").value;
     } else {
         document.getElementById("penalesDiv").style.display = "none";
     }
@@ -847,12 +1063,27 @@ window.guardarPartido = async function(){
     }
 
     let ganadorPenales = "";
+    let pen1 = null, pen2 = null;
     if(g1 === g2){
-        ganadorPenales = document.getElementById("ganadorPenales").value;
+        if(document.getElementById("pen1").value === "" || document.getElementById("pen2").value === ""){
+            alert("Ingresa el resultado de los penales");
+            return;
+        }
+        pen1 = Number(document.getElementById("pen1").value);
+        pen2 = Number(document.getElementById("pen2").value);
+        if(pen1 < 0 || pen2 < 0){
+            alert("Los penales no pueden ser negativos");
+            return;
+        }
+        if(pen1 === pen2){
+            alert("El resultado de penales no puede ser empate");
+            return;
+        }
+        ganadorPenales = pen1 > pen2 ? equipo1 : equipo2;
     }
 
     const fecha = Number(document.getElementById("fechaPartido")?.value || 1);
-    const partido = { equipo1, equipo2, g1, g2, ganadorPenales, goles:[], fecha };
+    const partido = { equipo1, equipo2, g1, g2, ganadorPenales, pen1, pen2, goles:[], fecha };
 
     if(editando === -1){
         partidos.push(partido);
@@ -870,14 +1101,11 @@ window.guardarPartido = async function(){
 window.editarPartido = function(index){
     const p = partidos[index];
 
-    // Construir opciones de equipos
-    const optsEq = equiposBase.map(n => `<option value="${n}" ${n===p.equipo1?"selected":""}>${n}</option>`).join("");
+    const optsEq  = equiposBase.map(n => `<option value="${n}" ${n===p.equipo1?"selected":""}>${n}</option>`).join("");
     const optsEq2 = equiposBase.map(n => `<option value="${n}" ${n===p.equipo2?"selected":""}>${n}</option>`).join("");
-    const optsPen = equiposBase.map(n => `<option value="${n}" ${n===p.ganadorPenales?"selected":""}>${n}</option>`).join("");
 
     const esEmpate = p.g1 === p.g2;
 
-    // Construir lista de goles
     let golesHTML = "";
     if(p.goles && p.goles.length > 0){
         p.goles.forEach((g, gi) => {
@@ -900,19 +1128,25 @@ window.editarPartido = function(index){
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
         <div>
             <label style="font-size:12px; opacity:0.7;">Equipo 1</label>
-            <select id="edit_eq1" style="width:100%; padding:10px; margin-top:5px; border:none; border-radius:8px; background:#1e293b; color:white;">${optsEq}</select>
+            <select id="edit_eq1" style="width:100%; padding:10px; margin-top:5px; border:none; border-radius:8px; background:#1e293b; color:white;" onchange="revisarEmpateModal()">${optsEq}</select>
             <input id="edit_g1" type="number" value="${p.g1}" style="width:100%; padding:10px; margin-top:8px; border:none; border-radius:8px; background:#1e293b; color:white;" oninput="revisarEmpateModal()">
         </div>
         <div>
             <label style="font-size:12px; opacity:0.7;">Equipo 2</label>
-            <select id="edit_eq2" style="width:100%; padding:10px; margin-top:5px; border:none; border-radius:8px; background:#1e293b; color:white;">${optsEq2}</select>
+            <select id="edit_eq2" style="width:100%; padding:10px; margin-top:5px; border:none; border-radius:8px; background:#1e293b; color:white;" onchange="revisarEmpateModal()">${optsEq2}</select>
             <input id="edit_g2" type="number" value="${p.g2}" style="width:100%; padding:10px; margin-top:8px; border:none; border-radius:8px; background:#1e293b; color:white;" oninput="revisarEmpateModal()">
         </div>
     </div>
 
     <div id="edit_penalesDiv" style="display:${esEmpate?"block":"none"}; background:#1e293b; padding:12px; border-radius:8px; margin-bottom:15px;">
-        <p class="small">Empate → elegir ganador por penales</p>
-        <select id="edit_ganadorPenales" style="width:100%; padding:10px; margin-top:5px; border:none; border-radius:8px; background:#0f172a; color:white;">${optsPen}</select>
+        <p class="small" style="margin:0 0 10px 0;">Empate → ingresa el resultado de penales</p>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span id="edit_pen1Label" style="flex:1; font-size:13px; text-align:right; opacity:0.8;">${p.equipo1}</span>
+            <input type="number" id="edit_pen1" value="${p.pen1 ?? ''}" placeholder="0" min="0" max="50" style="width:70px; flex:none; text-align:center; padding:8px; border:none; border-radius:8px; background:#0f172a; color:white;">
+            <span style="opacity:0.5;">-</span>
+            <input type="number" id="edit_pen2" value="${p.pen2 ?? ''}" placeholder="0" min="0" max="50" style="width:70px; flex:none; text-align:center; padding:8px; border:none; border-radius:8px; background:#0f172a; color:white;">
+            <span id="edit_pen2Label" style="flex:1; font-size:13px; opacity:0.8;">${p.equipo2}</span>
+        </div>
     </div>
 
     <hr style="margin:20px 0; opacity:0.3;">
@@ -1012,71 +1246,84 @@ window.eliminarPartido = async function(index){
 function limpiarFormulario(){
     document.getElementById("gol1").value = "";
     document.getElementById("gol2").value = "";
+    document.getElementById("pen1").value = "";
+    document.getElementById("pen2").value = "";
     document.getElementById("penalesDiv").style.display = "none";
     editando = -1;
 }
 
-// ── Modal de goles ─────────────────────────────────────────────────
-window.verGoles = function(index){
-    const p = partidos[index];
+function buildGolesColumnas(p){
     let golesIzq = "";
     let golesDer = "";
 
     if(p.goles && p.goles.length > 0){
         p.goles.forEach(g => {
             if(g.jugador.toUpperCase() === "GEC") return;
-            const emoji = "⚽ ".repeat(g.cantidad || 1);
-            const bloque = `
-            <div style="background:#1e293b; padding:10px; border-radius:10px; margin-bottom:10px; ${g.equipo === p.equipo2 ? "text-align:right;" : ""}">
-                ${g.jugador}${g.ownGoal ? " (GEC)" : ""} ${emoji}
-            </div>`;
-            if(g.equipo === p.equipo1){ golesIzq += bloque; }
-            else { golesDer += bloque; }
+            const emojis = "⚽ ".repeat(g.cantidad || 1).trim();
+            const label  = `${g.jugador}${g.ownGoal ? " (GEC)" : ""}`;
+            if(g.equipo === p.equipo1){
+                golesIzq += `
+                <div style="display:flex; align-items:center; justify-content:space-between; background:#1e293b; border:1px solid #334155; padding:10px 14px; border-radius:10px; margin-bottom:8px; gap:10px;">
+                    <span style="font-weight:600; font-size:14px;">${label}</span>
+                    <span style="font-size:16px; letter-spacing:2px;">${emojis}</span>
+                </div>`;
+            } else {
+                golesDer += `
+                <div style="display:flex; align-items:center; justify-content:space-between; background:#1e293b; border:1px solid #334155; padding:10px 14px; border-radius:10px; margin-bottom:8px; gap:10px; text-align:right;">
+                    <span style="font-size:16px; letter-spacing:2px;">${emojis}</span>
+                    <span style="font-weight:600; font-size:14px;">${label}</span>
+                </div>`;
+            }
         });
-    } else {
-        golesIzq = "<div class='small'>Sin goles registrados</div>";
     }
 
+    if(!golesIzq) golesIzq = `<div style="opacity:0.4; font-size:13px; padding:8px 0;">Sin goles</div>`;
+    if(!golesDer) golesDer = `<div style="opacity:0.4; font-size:13px; padding:8px 0; text-align:right;">Sin goles</div>`;
+
+    return { golesIzq, golesDer };
+}
+
+window.verGoles = function(index){
+    const p = partidos[index];
+    const { golesIzq, golesDer } = buildGolesColumnas(p);
+
     const html = `
-    <h3 style="text-align:center; margin-bottom:25px;">
-        ${p.equipo1} ${p.g1} - ${p.g2} ${p.equipo2}
-    </h3>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:40px;">
-        <div><h3>${p.equipo1}</h3>${golesIzq}</div>
-        <div><h3 style="text-align:right;">${p.equipo2}</h3>${golesDer}</div>
+    <!-- Cabecera del partido -->
+    <div style="display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:24px; padding:16px; background:#1e293b; border-radius:14px; border:1px solid #334155;">
+        <div style="display:flex; align-items:center; gap:10px; flex:1; justify-content:flex-end;">
+            <span style="font-size:14px; font-weight:700; text-align:right;">${p.equipo1}</span>
+            <img src="${escudos[p.equipo1] || ESCUDO_DEFAULT}" class="escudo" style="width:44px;height:44px;">
+        </div>
+        <div style="background:#0f172a; border:2px solid #475569; padding:8px 18px; border-radius:12px; font-size:26px; font-weight:900; letter-spacing:2px; white-space:nowrap; text-align:center;">
+            ${p.g1} <span style="opacity:0.4;">-</span> ${p.g2}
+            ${p.ganadorPenales ? `<div style="font-size:12px; font-weight:500; letter-spacing:0; opacity:0.6; margin-top:2px;">(${p.pen1 ?? '?'} - ${p.pen2 ?? '?'} pen.)</div>` : ""}
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; flex:1;">
+            <img src="${escudos[p.equipo2] || ESCUDO_DEFAULT}" class="escudo" style="width:44px;height:44px;">
+            <span style="font-size:14px; font-weight:700;">${p.equipo2}</span>
+        </div>
+    </div>
+
+    <!-- Columnas de goles -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+        <div>
+            <div style="font-size:12px; text-transform:uppercase; letter-spacing:0.1em; opacity:0.5; margin-bottom:10px;">${p.equipo1}</div>
+            ${golesIzq}
+        </div>
+        <div>
+            <div style="font-size:12px; text-transform:uppercase; letter-spacing:0.1em; opacity:0.5; margin-bottom:10px; text-align:right;">${p.equipo2}</div>
+            ${golesDer}
+        </div>
     </div>`;
 
     document.getElementById("contenidoGoles").innerHTML = html;
     document.getElementById("modalGoles").style.display = "block";
 };
 
-window.agregarGol = async function(index, equipo){
-    const input = prompt("Jugador (puedes usar: Nombre (GEC) para autogol)");
-    if(!input) return;
-
-    const cantidad = Number(prompt("Cantidad de goles", "1"));
-    if(!cantidad || cantidad <= 0) return;
-
-    let jugador = input.trim();
-    let ownGoal = false;
-
-    if(jugador.toUpperCase().includes("(GEC)")){
-        ownGoal = true;
-        jugador = jugador.replace(/\(GEC\)/gi, "").trim();
-    }
-
-    partidos[index].goles.push({ jugador, equipo, cantidad, ownGoal });
-
-    await guardarDatos();
-    actualizarGoleadores();
-    verGoles(index);
-};
-
 window.cerrarModal = function(){
     document.getElementById("modalGoles").style.display = "none";
 };
 
-// ── Admin / Vista ──────────────────────────────────────────────────
 window.activarVista = function(){
     admin = false;
     document.querySelectorAll(".admin-only").forEach(el => el.style.display = "none");
@@ -1092,16 +1339,16 @@ window.activarAdmin = function(){
     }
 };
 
-// ── Eventos ────────────────────────────────────────────────────────
 document.getElementById("gol1").addEventListener("input", revisarEmpate);
 document.getElementById("gol2").addEventListener("input", revisarEmpate);
+document.getElementById("equipo1").addEventListener("change", revisarEmpate);
+document.getElementById("equipo2").addEventListener("change", revisarEmpate);
 
-// ── Inicio ─────────────────────────────────────────────────────────
 iniciarEquipos();
 llenarSelects();
 renderFechasTabs();
 activarVista();
-escucharCambios(); // Arranca la escucha en tiempo real
+escucharCambios();
 
 </script>
 
