@@ -538,14 +538,20 @@ Guardar Partido
 <!-- Modal historial equipo -->
 <div id="modalHistorialEquipo" class="modal">
 <div class="modal-content">
-    <div style="display:flex; align-items:center; gap:14px; margin-bottom:20px;">
+    <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
         <img id="historialEscudo" class="escudo" style="width:64px;height:64px;">
         <div>
             <h2 id="historialNombreEquipo" style="margin:0;"></h2>
             <div id="historialResumen" style="font-size:13px; opacity:0.7; margin-top:4px;"></div>
         </div>
     </div>
+    <!-- Tabs -->
+    <div style="display:flex; gap:8px; margin-bottom:16px;">
+        <button id="tabPartidosBtn" onclick="switchHistorialTab('partidos')" style="background:#2563eb; padding:7px 18px; border-radius:20px; font-size:13px;">Partidos</button>
+        <button id="tabPlantillaBtn" onclick="switchHistorialTab('plantilla')" style="background:#1e293b; padding:7px 18px; border-radius:20px; font-size:13px;">Plantilla</button>
+    </div>
     <div id="historialPartidosEquipo"></div>
+    <div id="historialPlantillaEquipo" style="display:none;"></div>
     <button style="margin-top:20px;" onclick="cerrarModalHistorial()">Cerrar</button>
 </div>
 </div>
@@ -574,8 +580,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
-const refPartidos = doc(db, "copa", "partidos");
-const refEscudos  = doc(db, "copa", "escudos");
+const refPartidos  = doc(db, "copa", "partidos");
+const refEscudos   = doc(db, "copa", "escudos");
+const refPlantillas = doc(db, "copa", "plantillas");
 
 function setSyncStatus(estado){
     const el = document.getElementById("syncStatus");
@@ -594,8 +601,9 @@ function setSyncStatus(estado){
 async function guardarDatos(){
     setSyncStatus("loading");
     try {
-        await setDoc(refPartidos, { lista: partidos });
-        await setDoc(refEscudos,  { mapa: escudos  });
+        await setDoc(refPartidos,   { lista: partidos });
+        await setDoc(refEscudos,    { mapa: escudos   });
+        await setDoc(refPlantillas, { mapa: plantillas });
         setSyncStatus("ok");
     } catch(e){
         console.error(e);
@@ -624,6 +632,14 @@ function escucharCambios(){
         actualizarHistorial();
         actualizarGoleadores();
     }, () => setSyncStatus("error"));
+
+    onSnapshot(refPlantillas, (snap) => {
+        if(snap.exists()){
+            plantillas = snap.data().mapa || {};
+        } else {
+            plantillas = {};
+        }
+    }, () => {});
 }
 
 const equiposBase = [
@@ -639,11 +655,12 @@ const equiposBase = [
 
 const ESCUDO_DEFAULT = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
-let equipos  = [];
-let partidos = [];
-let escudos  = {};
-let editando = -1;
-let admin    = false;
+let equipos   = [];
+let partidos  = [];
+let escudos   = {};
+let plantillas = {}; // { "NombreEquipo": ["Jugador1", "Jugador2", ...] }
+let editando  = -1;
+let admin     = false;
 let fechaActiva = 1;
 
 function iniciarEquipos(){
@@ -802,6 +819,10 @@ window.verHistorialEquipo = function(nombre){
     document.getElementById("historialResumen").textContent =
         eq ? `${eq.PJ} PJ · ${eq.G} G · ${eq.Eg} Eg · ${eq.Ep} Ep · ${eq.P} P · ${eq.GF} GF · ${eq.GC} GC · ${eq.PTS} PTS` : "";
 
+    _equipoHistorialActual = nombre;
+    // Resetear a tab Partidos
+    switchHistorialTab('partidos');
+
     const contenedor = document.getElementById("historialPartidosEquipo");
     contenedor.innerHTML = "";
 
@@ -868,8 +889,9 @@ window.verHistorialEquipo = function(nombre){
                 </div>
 
                 <div style="background:#0f172a; padding:5px 12px; border-radius:10px; font-size:17px; white-space:nowrap; text-align:center;">
-                    ${p.g1} - ${p.g2}
-                    ${p.ganadorPenales ? `<div style="font-size:11px; opacity:0.6;">(${p.pen1 ?? '?'}-${p.pen2 ?? '?'} pen.)</div>` : ""}
+                    ${p.ganadorPenales
+                        ? `${p.g1} <span style="font-size:12px;opacity:0.7;">(${p.pen1 ?? '?'})</span> - ${p.g2} <span style="font-size:12px;opacity:0.7;">(${p.pen2 ?? '?'})</span>`
+                        : `${p.g1} - ${p.g2}`}
                 </div>
 
                 <div style="display:flex; align-items:center; gap:8px; flex:1;">
@@ -905,6 +927,106 @@ window.toggleGolesHistorial = function(id){
 
 window.cerrarModalHistorial = function(){
     document.getElementById("modalHistorialEquipo").style.display = "none";
+};
+
+let _equipoHistorialActual = "";
+
+window.switchHistorialTab = function(tab){
+    const btnP = document.getElementById("tabPartidosBtn");
+    const btnPl = document.getElementById("tabPlantillaBtn");
+    const secP  = document.getElementById("historialPartidosEquipo");
+    const secPl = document.getElementById("historialPlantillaEquipo");
+
+    if(tab === "partidos"){
+        btnP.style.background  = "#2563eb";
+        btnPl.style.background = "#1e293b";
+        secP.style.display  = "block";
+        secPl.style.display = "none";
+    } else {
+        btnPl.style.background = "#2563eb";
+        btnP.style.background  = "#1e293b";
+        secP.style.display  = "none";
+        secPl.style.display = "block";
+        renderPlantilla(_equipoHistorialActual);
+    }
+};
+
+function renderPlantilla(nombre){
+    const sec = document.getElementById("historialPlantillaEquipo");
+    const jugadores = plantillas[nombre] || [];
+
+    // Calcular goles por jugador del equipo
+    const golesJugador = {};
+    partidos.forEach(p => {
+        if(!p.goles) return;
+        p.goles.forEach(g => {
+            if(g.ownGoal) return;
+            if(g.equipo !== nombre) return;
+            golesJugador[g.jugador] = (golesJugador[g.jugador] || 0) + (g.cantidad || 1);
+        });
+    });
+
+    let html = `<div style="display:flex; flex-wrap:wrap; gap:10px;">`;
+    jugadores.forEach((j, i) => {
+        const goles = golesJugador[j] || 0;
+        const golesTag = goles > 0
+            ? `<span style="font-size:11px; opacity:0.75; display:flex; align-items:center; gap:3px;">⚽ ${goles}</span>`
+            : "";
+        html += `
+        <div style="display:flex; align-items:center; gap:10px; background:#1e293b; border:1px solid #334155; border-radius:10px; padding:10px 14px; min-width:180px;">
+            <div style="width:32px; height:32px; border-radius:50%; background:#2563eb; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; flex-shrink:0;">${i+1}</div>
+            <div style="display:flex; flex-direction:column; gap:2px;">
+                <span style="font-size:14px; font-weight:600; line-height:1.2;">${j}</span>
+                ${golesTag}
+            </div>
+            ${admin ? `<div style="display:flex; gap:4px; margin-left:auto;">
+                <button onclick="editarJugador('${nombre}', ${i})" style="padding:4px 8px; font-size:11px; background:#d97706;">✏️</button>
+                <button onclick="borrarJugador('${nombre}', ${i})" style="padding:4px 8px; font-size:11px; background:#dc2626;">🗑</button>
+            </div>` : ""}
+        </div>`;
+    });
+    html += `</div>`;
+
+    if(jugadores.length === 0){
+        html = `<p style="opacity:0.5; text-align:center; padding:20px;">${admin ? "No hay jugadores. Añade uno abajo." : "Sin jugadores registrados."}</p>`;
+    }
+
+    if(admin){
+        html += `
+        <div style="display:flex; gap:10px; margin-top:16px; align-items:center;">
+            <input id="nuevoJugadorInput" type="text" placeholder="Nombre del jugador" style="flex:1; margin-top:0;">
+            <button onclick="agregarJugador('${nombre}')" style="white-space:nowrap; background:#16a34a;">+ Añadir</button>
+        </div>`;
+    }
+
+    sec.innerHTML = html;
+}
+
+window.agregarJugador = async function(equipo){
+    const input = document.getElementById("nuevoJugadorInput");
+    const nombre = input.value.trim();
+    if(!nombre) return;
+    if(!plantillas[equipo]) plantillas[equipo] = [];
+    plantillas[equipo].push(nombre);
+    input.value = "";
+    await guardarDatos();
+    renderPlantilla(equipo);
+};
+
+window.editarJugador = async function(equipo, idx){
+    const actual = (plantillas[equipo] || [])[idx];
+    const nuevo = prompt("Nombre del jugador:", actual);
+    if(!nuevo || !nuevo.trim()) return;
+    plantillas[equipo][idx] = nuevo.trim();
+    await guardarDatos();
+    renderPlantilla(equipo);
+};
+
+window.borrarJugador = async function(equipo, idx){
+    if(!confirm("¿Eliminar jugador?")) return;
+    plantillas[equipo].splice(idx, 1);
+    await guardarDatos();
+    renderPlantilla(equipo);
 };
 
 // ── Tabs de fechas ─────────────────────────────────────────────────
@@ -954,7 +1076,9 @@ function actualizarHistorial(){
                 </div>
 
                 <div style="background:#0f172a; padding:6px 12px; border-radius:10px; white-space:nowrap; font-size:18px;">
-                    ${p.g1} - ${p.g2}${p.ganadorPenales ? `<span style="font-size:12px; opacity:0.6; margin-left:4px;">(${p.pen1 ?? '?'}-${p.pen2 ?? '?'} pen.)</span>` : ""}
+                    ${p.ganadorPenales
+                        ? `${p.g1} <span style="font-size:13px;opacity:0.7;">(${p.pen1 ?? '?'})</span> - ${p.g2} <span style="font-size:13px;opacity:0.7;">(${p.pen2 ?? '?'})</span>`
+                        : `${p.g1} - ${p.g2}`}
                 </div>
 
                 <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
@@ -1295,8 +1419,9 @@ window.verGoles = function(index){
             <img src="${escudos[p.equipo1] || ESCUDO_DEFAULT}" class="escudo" style="width:44px;height:44px;">
         </div>
         <div style="background:#0f172a; border:2px solid #475569; padding:8px 18px; border-radius:12px; font-size:26px; font-weight:900; letter-spacing:2px; white-space:nowrap; text-align:center;">
-            ${p.g1} <span style="opacity:0.4;">-</span> ${p.g2}
-            ${p.ganadorPenales ? `<div style="font-size:12px; font-weight:500; letter-spacing:0; opacity:0.6; margin-top:2px;">(${p.pen1 ?? '?'} - ${p.pen2 ?? '?'} pen.)</div>` : ""}
+            ${p.ganadorPenales
+                ? `${p.g1} <span style="font-size:16px;opacity:0.7;">(${p.pen1 ?? '?'})</span> <span style="opacity:0.4;">-</span> ${p.g2} <span style="font-size:16px;opacity:0.7;">(${p.pen2 ?? '?'})</span>`
+                : `${p.g1} <span style="opacity:0.4;">-</span> ${p.g2}`}
         </div>
         <div style="display:flex; align-items:center; gap:10px; flex:1;">
             <img src="${escudos[p.equipo2] || ESCUDO_DEFAULT}" class="escudo" style="width:44px;height:44px;">
