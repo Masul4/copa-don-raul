@@ -367,6 +367,133 @@ button:hover{
 }
 .goles-detalle.abierto { display:block; }
 
+/* ── Modal Admin Login ── */
+#modalAdmin {
+    display:none;
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(0,0,0,0.85);
+    backdrop-filter:blur(6px);
+    z-index:1000;
+    align-items:center;
+    justify-content:center;
+}
+#modalAdmin.visible {
+    display:flex;
+}
+.admin-login-box {
+    background:linear-gradient(160deg,#0f172a 0%,#1e293b 100%);
+    border:1px solid #334155;
+    border-radius:20px;
+    padding:36px 32px;
+    width:100%;
+    max-width:360px;
+    box-shadow:0 24px 64px rgba(0,0,0,0.6);
+    text-align:center;
+    position:relative;
+}
+.admin-login-box .lock-icon {
+    font-size:42px;
+    margin-bottom:12px;
+    display:block;
+}
+.admin-login-box h3 {
+    margin:0 0 6px 0;
+    font-size:20px;
+    font-weight:800;
+    letter-spacing:0.02em;
+}
+.admin-login-box p {
+    margin:0 0 24px 0;
+    font-size:13px;
+    opacity:0.5;
+}
+.admin-pass-wrap {
+    position:relative;
+    margin-bottom:18px;
+}
+.admin-pass-wrap input {
+    width:100%;
+    padding:13px 44px 13px 16px;
+    border-radius:12px;
+    border:2px solid #334155;
+    background:#0f172a;
+    color:white;
+    font-size:15px;
+    letter-spacing:0.12em;
+    margin-top:0;
+    transition:border-color 0.2s;
+    box-sizing:border-box;
+}
+.admin-pass-wrap input:focus {
+    outline:none;
+    border-color:#2563eb;
+}
+.admin-pass-wrap input.error {
+    border-color:#dc2626;
+}
+.toggle-pass {
+    position:absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-50%);
+    background:none;
+    border:none;
+    color:#64748b;
+    cursor:pointer;
+    padding:4px;
+    font-size:16px;
+    line-height:1;
+}
+.toggle-pass:hover { color:white; background:none; }
+.admin-error-msg {
+    color:#f87171;
+    font-size:12px;
+    margin:-10px 0 14px 0;
+    min-height:18px;
+    transition:opacity 0.2s;
+}
+.admin-login-box .btn-ingresar {
+    width:100%;
+    padding:13px;
+    border-radius:12px;
+    background:linear-gradient(135deg,#1d4ed8,#2563eb);
+    color:white;
+    font-size:15px;
+    font-weight:700;
+    border:none;
+    cursor:pointer;
+    transition:opacity 0.2s, transform 0.1s;
+    letter-spacing:0.03em;
+}
+.admin-login-box .btn-ingresar:hover { opacity:0.9; }
+.admin-login-box .btn-cancelar {
+    margin-top:12px;
+    background:none;
+    border:none;
+    color:#64748b;
+    font-size:13px;
+    cursor:pointer;
+    padding:4px;
+    width:100%;
+    transition:color 0.2s;
+}
+.admin-login-box .btn-cancelar:hover { color:white; background:none; }
+
+@keyframes shake {
+    0%,100%  { transform:translateX(0); }
+    15%      { transform:translateX(-8px); }
+    30%      { transform:translateX(8px); }
+    45%      { transform:translateX(-6px); }
+    60%      { transform:translateX(6px); }
+    75%      { transform:translateX(-3px); }
+    90%      { transform:translateX(3px); }
+}
+.shake {
+    animation:shake 0.45s ease;
+}
+
 </style>
 </head>
 
@@ -380,14 +507,8 @@ button:hover{
 
 <header>
     <div style="display:flex; align-items:center; justify-content:center; gap:16px;">
-        <img id="trofeoImg" src="" alt="" style="height:64px; width:64px; object-fit:contain; display:none;">
+        <img id="trofeoImg" src="" alt="" style="height:80px; width:80px; object-fit:contain; display:none;">
         <h1 style="margin:0;">Copa Don Raúl</h1>
-    </div>
-    <div class="admin-only" style="margin-top:8px; font-size:12px; opacity:0.5;">
-        <label style="cursor:pointer; text-decoration:underline;">
-            Cambiar imagen del trofeo
-            <input type="file" accept="image/*" style="display:none;" onchange="subirTrofeo(event)">
-        </label>
     </div>
 </header>
 
@@ -571,6 +692,22 @@ Guardar Partido
     <div id="historialPlantillaEquipo" style="display:none;"></div>
     <button style="margin-top:20px;" onclick="cerrarModalHistorial()">Cerrar</button>
 </div>
+</div>
+
+<!-- Modal Admin Login -->
+<div id="modalAdmin">
+    <div class="admin-login-box" id="adminLoginBox">
+        <span class="lock-icon">🔐</span>
+        <h3>Modo Administrador</h3>
+        <p>Ingresa la contraseña para continuar</p>
+        <div class="admin-pass-wrap">
+            <input type="password" id="adminPassInput" placeholder="Contraseña" autocomplete="off" onkeydown="if(event.key==='Enter')submitAdminPass()">
+            <button class="toggle-pass" onclick="togglePassVis()" id="togglePassBtn" title="Mostrar/ocultar">👁</button>
+        </div>
+        <div class="admin-error-msg" id="adminErrorMsg"></div>
+        <button class="btn-ingresar" onclick="submitAdminPass()">Ingresar</button>
+        <button class="btn-cancelar" onclick="cerrarModalAdmin()">Cancelar</button>
+    </div>
 </div>
 
 <!-- Firebase SDK -->
@@ -821,13 +958,24 @@ function actualizarTabla(){
             const gC   = esE1 ? p.g2 : p.g1;
             let icono;
             if(gF > gC){
+                // Victoria normal
                 icono = `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#16a34a;font-size:11px;font-weight:bold;">✓</span>`;
             } else if(gF < gC){
+                // Derrota normal
                 icono = `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#dc2626;font-size:11px;font-weight:bold;">✕</span>`;
             } else {
-                // empate: ganó o perdió penales
+                // Empate con penales: mitad amarillo + mitad verde (ganó) o mitad rojo (perdió)
                 const gano = p.ganadorPenales === e.nombre;
-                icono = `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${gano?"#16a34a":"#dc2626"};font-size:11px;font-weight:bold;">${gano?"✓":"✕"}</span>`;
+                const colorDer = gano ? "#16a34a" : "#dc2626";
+                icono = `<svg width="22" height="22" viewBox="0 0 22 22" style="flex-shrink:0;" title="${gano ? 'Empate - ganó penales' : 'Empate - perdió penales'}">
+                    <clipPath id="cp${gano}"><circle cx="11" cy="11" r="10"/></clipPath>
+                    <g clip-path="url(#cp${gano})">
+                        <polygon points="0,0 22,0 0,22" fill="#d97706"/>
+                        <polygon points="22,0 22,22 0,22" fill="${colorDer}"/>
+                    </g>
+                    <circle cx="11" cy="11" r="10" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="1"/>
+                    <text x="11" y="15" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Arial,sans-serif">–</text>
+                </svg>`;
             }
             iconosUlt += icono;
         });
@@ -1691,14 +1839,65 @@ window.activarVista = function(){
     document.querySelectorAll(".admin-only").forEach(el => el.style.display = "none");
 };
 
+// Hash SHA-256 de "altamarino" — la contraseña real nunca está en el código
+const ADMIN_HASH = "e592727197f51f1e4ad79ac893c31c0d252a8e946e7f763e74dda472e4acbcf0";
+
+async function hashStr(str){
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,"0")).join("");
+}
+
 window.activarAdmin = function(){
-    const pass = prompt("Contraseña admin");
-    if(pass === "altamarino"){
+    const modal = document.getElementById("modalAdmin");
+    modal.classList.add("visible");
+    document.getElementById("adminPassInput").value = "";
+    document.getElementById("adminErrorMsg").textContent = "";
+    document.getElementById("adminPassInput").classList.remove("error");
+    setTimeout(() => document.getElementById("adminPassInput").focus(), 80);
+};
+
+window.cerrarModalAdmin = function(){
+    document.getElementById("modalAdmin").classList.remove("visible");
+};
+
+window.togglePassVis = function(){
+    const inp = document.getElementById("adminPassInput");
+    const btn = document.getElementById("togglePassBtn");
+    if(inp.type === "password"){
+        inp.type = "text";
+        btn.textContent = "🙈";
+    } else {
+        inp.type = "password";
+        btn.textContent = "👁";
+    }
+};
+
+window.submitAdminPass = async function(){
+    const input = document.getElementById("adminPassInput");
+    const errMsg = document.getElementById("adminErrorMsg");
+    const box = document.getElementById("adminLoginBox");
+    const val = input.value;
+    if(!val) return;
+
+    const h = await hashStr(val);
+    if(h === ADMIN_HASH){
         admin = true;
         localStorage.setItem("copaAdmin", "1");
         document.querySelectorAll(".admin-only").forEach(el => el.style.display = "block");
+        cerrarModalAdmin();
     } else {
-        alert("Contraseña incorrecta");
+        // Temblor + mensaje de error
+        input.classList.add("error");
+        errMsg.textContent = "⚠️ Contraseña incorrecta";
+        box.classList.remove("shake");
+        void box.offsetWidth; // reflow para reiniciar animación
+        box.classList.add("shake");
+        input.value = "";
+        input.focus();
+        setTimeout(() => {
+            input.classList.remove("error");
+            errMsg.textContent = "";
+        }, 2200);
     }
 };
 
