@@ -379,7 +379,16 @@ button:hover{
 </div>
 
 <header>
-    <h1>🏆 Copa Don Raúl</h1>
+    <div style="display:flex; align-items:center; justify-content:center; gap:16px;">
+        <img id="trofeoImg" src="" alt="" style="height:64px; width:64px; object-fit:contain; display:none;">
+        <h1 style="margin:0;">Copa Don Raúl</h1>
+    </div>
+    <div class="admin-only" style="margin-top:8px; font-size:12px; opacity:0.5;">
+        <label style="cursor:pointer; text-decoration:underline;">
+            Cambiar imagen del trofeo
+            <input type="file" accept="image/*" style="display:none;" onchange="subirTrofeo(event)">
+        </label>
+    </div>
 </header>
 
 <!-- Botón creador en su propia barra, fuera del header -->
@@ -429,10 +438,10 @@ button:hover{
 </div>
 
 <div style="margin-top:12px; display:flex; flex-direction:column; gap:6px;">
-    <div style="display:flex; align-items:center; gap:10px; background:#6b5200; padding:8px 14px; border-radius:8px; font-size:13px;">
+    <div onclick="cambiarFecha('oro')" style="display:flex; align-items:center; gap:10px; background:#6b5200; padding:8px 14px; border-radius:8px; font-size:13px; cursor:pointer; transition:filter 0.15s;" onmouseover="this.style.filter='brightness(1.3)'" onmouseout="this.style.filter=''">
         <span>🥇</span> <span>Clasifica a la Copa de Oro</span>
     </div>
-    <div style="display:flex; align-items:center; gap:10px; background:#4b5563; padding:8px 14px; border-radius:8px; font-size:13px;">
+    <div onclick="cambiarFecha('plata')" style="display:flex; align-items:center; gap:10px; background:#4b5563; padding:8px 14px; border-radius:8px; font-size:13px; cursor:pointer; transition:filter 0.15s;" onmouseover="this.style.filter='brightness(1.3)'" onmouseout="this.style.filter=''">
         <span>🥈</span> <span>Clasifica a la Copa de Plata</span>
     </div>
 </div>
@@ -485,11 +494,19 @@ Guardar Partido
 
 
 
+<div class="card admin-only">
+<h2>📊 Visualizaciones</h2>
+<div id="visitasPanel">
+    <p style="opacity:0.5; font-size:13px;">Cargando estadísticas...</p>
+</div>
+</div>
+
 <div class="card">
 
 <h2>Partidos</h2>
 
 <div class="fechas-tabs" id="fechasTabs"></div>
+<div class="fechas-tabs" id="copasTabs" style="margin-top:-4px; margin-bottom:16px;"></div>
 
 <div id="historial"></div>
 
@@ -580,9 +597,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
-const refPartidos  = doc(db, "copa", "partidos");
-const refEscudos   = doc(db, "copa", "escudos");
+const refPartidos   = doc(db, "copa", "partidos");
+const refEscudos    = doc(db, "copa", "escudos");
 const refPlantillas = doc(db, "copa", "plantillas");
+const refVisitas    = doc(db, "copa", "visitas");
+const refTrofeo     = doc(db, "copa", "trofeo");
 
 function setSyncStatus(estado){
     const el = document.getElementById("syncStatus");
@@ -609,6 +628,36 @@ async function guardarDatos(){
         console.error(e);
         setSyncStatus("error");
     }
+}
+
+window.subirTrofeo = function(event){
+    const file = event.target.files[0];
+    if(!file) return;
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = e => { img.src = e.target.result; };
+    img.onload = function(){
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = 200; canvas.height = 200;
+        ctx.drawImage(img, 0, 0, 200, 200);
+        const data = canvas.toDataURL("image/png", 0.9);
+        setDoc(refTrofeo, { img: data }).then(() => aplicarTrofeo(data));
+    };
+    reader.readAsDataURL(file);
+};
+
+function aplicarTrofeo(src){
+    const el = document.getElementById("trofeoImg");
+    if(!src){ el.style.display = "none"; return; }
+    el.src = src;
+    el.style.display = "block";
+}
+
+function escucharTrofeo(){
+    onSnapshot(refTrofeo, snap => {
+        aplicarTrofeo(snap.exists() ? snap.data().img : "");
+    });
 }
 
 function escucharCambios(){
@@ -1035,21 +1084,141 @@ function renderFechasTabs(){
     if(!tabs) return;
     tabs.innerHTML = "";
     for(let i = 1; i <= 7; i++){
-        tabs.innerHTML += `<button class="fecha-tab ${i === fechaActiva ? 'activa' : ''}" onclick="cambiarFecha(${i})">Fecha ${i}</button>`;
+        tabs.innerHTML += `<button class="fecha-tab ${fechaActiva === i ? 'activa' : ''}" onclick="cambiarFecha(${i})">Fecha ${i}</button>`;
+    }
+
+    // Copa tabs en su propia fila
+    const copaRow = document.getElementById("copasTabs");
+    if(copaRow){
+        copaRow.innerHTML = `
+        <button class="fecha-tab" onclick="cambiarFecha('plata')"
+            style="border-color:#6b7280; background:${fechaActiva==='plata'?'#4b5563':'transparent'};">🥈 Copa de Plata</button>
+        <button class="fecha-tab" onclick="cambiarFecha('oro')"
+            style="border-color:#a16207; background:${fechaActiva==='oro'?'#6b5200':'transparent'};">🥇 Copa de Oro</button>`;
     }
 }
 
 window.cambiarFecha = function(n){
     fechaActiva = n;
     const sel = document.getElementById("fechaPartido");
-    if(sel) sel.value = String(n);
+    if(sel && typeof n === 'number') sel.value = String(n);
     renderFechasTabs();
     actualizarHistorial();
 };
 
+function getTodosJugaron(){
+    return equipos.length > 0 && equipos.every(e => e.PJ >= 7);
+}
+
+function renderBracket(tipo){
+    const historial = document.getElementById("historial");
+    const listos = getTodosJugaron();
+
+    let s1, s2, s3, s4;
+    if(!listos){
+        const ad = { nombre: "A definir", escudo: null };
+        s1 = s2 = s3 = s4 = ad;
+    } else {
+        if(tipo === 'plata'){
+            s1 = equipos[4]; s2 = equipos[7];
+            s3 = equipos[5]; s4 = equipos[6];
+        } else {
+            s1 = equipos[0]; s2 = equipos[3];
+            s3 = equipos[1]; s4 = equipos[2];
+        }
+    }
+
+    const titulo = tipo === 'oro' ? '🥇 Copa de Oro' : '🥈 Copa de Plata';
+
+    function slot(eq){
+        const nombre = eq.nombre || "A definir";
+        const src = (eq.nombre && escudos[eq.nombre]) ? escudos[eq.nombre] : ESCUDO_DEFAULT;
+        return `
+        <div style="display:flex;align-items:center;gap:10px;background:#1e293b;border:1px solid #334155;border-radius:10px;padding:10px 14px;min-width:180px;">
+            <img src="${src}" style="width:30px;height:30px;border-radius:50%;border:1px solid #fff;object-fit:cover;flex-shrink:0;">
+            <span style="font-size:13px;font-weight:600;">${nombre}</span>
+        </div>`;
+    }
+
+    function finalSlot(){
+        return `
+        <div style="display:flex;align-items:center;gap:10px;background:#0f172a;border:2px dashed #334155;border-radius:10px;padding:10px 14px;min-width:180px;opacity:0.5;">
+            <span style="font-size:13px;">🏆 Por definir</span>
+        </div>`;
+    }
+
+    // Layout: [SF1 arriba] --conector-- [FINAL centro] --conector-- [SF2 abajo]
+    historial.innerHTML = `
+    <div style="padding:4px 0 12px;">
+        <div style="font-size:17px;font-weight:800;margin-bottom:20px;">
+            ${titulo}
+            ${!listos ? '<span style="font-size:12px;font-weight:400;opacity:0.45;margin-left:8px;">Los cruces se revelarán al terminar todas las fechas</span>' : ''}
+        </div>
+
+        <div style="display:flex;align-items:stretch;gap:0;max-width:640px;">
+
+            <!-- Columna semifinales -->
+            <div style="display:flex;flex-direction:column;justify-content:space-between;gap:0;flex:1;">
+
+                <!-- SF1 -->
+                <div>
+                    <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;opacity:0.45;margin-bottom:6px;">Semifinal 1</div>
+                    <div style="display:flex;flex-direction:column;gap:6px;">
+                        ${slot(s1)}
+                        ${slot(s2)}
+                    </div>
+                </div>
+
+                <!-- Espacio entre SF1 y SF2 -->
+                <div style="height:32px;"></div>
+
+                <!-- SF2 -->
+                <div>
+                    <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;opacity:0.45;margin-bottom:6px;">Semifinal 2</div>
+                    <div style="display:flex;flex-direction:column;gap:6px;">
+                        ${slot(s3)}
+                        ${slot(s4)}
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Conectores SVG -->
+            <div style="width:60px;flex-shrink:0;position:relative;">
+                <svg width="60" height="100%" viewBox="0 0 60 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="width:60px;height:100%;display:block;">
+                    <!-- Línea derecha SF1 (desde centro de SF1 hacia la derecha) -->
+                    <line x1="0" y1="67" x2="30" y2="67" stroke="#475569" stroke-width="2"/>
+                    <!-- Línea derecha SF2 -->
+                    <line x1="0" y1="233" x2="30" y2="233" stroke="#475569" stroke-width="2"/>
+                    <!-- Línea vertical uniendo ambas -->
+                    <line x1="30" y1="67" x2="30" y2="233" stroke="#475569" stroke-width="2"/>
+                    <!-- Línea hacia la final (centro) -->
+                    <line x1="30" y1="150" x2="60" y2="150" stroke="#475569" stroke-width="2"/>
+                </svg>
+            </div>
+
+            <!-- Columna final -->
+            <div style="display:flex;flex-direction:column;justify-content:center;flex:1;">
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;opacity:0.45;margin-bottom:6px;">Final</div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                    ${finalSlot()}
+                    ${finalSlot()}
+                </div>
+            </div>
+
+        </div>
+    </div>`;
+}
+
 function actualizarHistorial(){
     const historial = document.getElementById("historial");
     historial.innerHTML = "";
+
+    if(fechaActiva === 'plata' || fechaActiva === 'oro'){
+        renderBracket(fechaActiva);
+        renderFechasTabs();
+        return;
+    }
 
     const partidosFecha = partidos
         .map((p, i) => ({ ...p, _idx: i }))
@@ -1449,6 +1618,60 @@ window.cerrarModal = function(){
     document.getElementById("modalGoles").style.display = "none";
 };
 
+// ── Visitas ────────────────────────────────────────────────────────
+async function registrarVisita(){
+    // No contar visitas del admin
+    if(localStorage.getItem("copaAdmin") === "1") return;
+    try {
+        const snap = await getDoc(refVisitas);
+        const data = snap.exists() ? snap.data() : { total: 0, log: [] };
+        const ahora = new Date();
+        const entrada = {
+            fecha: ahora.toLocaleDateString("es-CL"),
+            hora:  ahora.toLocaleTimeString("es-CL", { hour:"2-digit", minute:"2-digit" }),
+            ts:    ahora.getTime()
+        };
+        const log = [...(data.log || []), entrada].slice(-100);
+        await setDoc(refVisitas, { total: (data.total || 0) + 1, log });
+    } catch(e){ console.warn("visitas:", e); }
+}
+
+function escucharVisitas(){
+    onSnapshot(refVisitas, (snap) => {
+        if(!snap.exists()) return;
+        const { total, log } = snap.data();
+        const el = document.getElementById("visitasPanel");
+        if(!el) return;
+
+        // Agrupar por fecha
+        const porFecha = {};
+        (log || []).forEach(v => {
+            porFecha[v.fecha] = (porFecha[v.fecha] || 0) + 1;
+        });
+        const diasRows = Object.entries(porFecha)
+            .sort((a,b) => b[0].localeCompare(a[0]))
+            .slice(0, 7)
+            .map(([f, c]) => `
+            <div style="display:flex;justify-content:space-between;padding:6px 10px;background:#0f172a;border-radius:8px;font-size:13px;">
+                <span>${f}</span><span style="font-weight:bold;">${c} visita${c>1?"s":""}</span>
+            </div>`).join("");
+
+        el.innerHTML = `
+        <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:120px;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:14px;text-align:center;">
+                <div style="font-size:32px;font-weight:900;">${total}</div>
+                <div style="font-size:12px;opacity:0.6;margin-top:4px;">Visitas totales</div>
+            </div>
+            <div style="flex:1;min-width:120px;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:14px;text-align:center;">
+                <div style="font-size:32px;font-weight:900;">${(porFecha[new Date().toLocaleDateString("es-CL")] || 0)}</div>
+                <div style="font-size:12px;opacity:0.6;margin-top:4px;">Hoy</div>
+            </div>
+        </div>
+        <div style="font-size:12px;opacity:0.5;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em;">Últimos 7 días</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">${diasRows || "<p style='opacity:0.4;font-size:13px;'>Sin datos aún</p>"}</div>`;
+    });
+}
+
 window.activarVista = function(){
     admin = false;
     document.querySelectorAll(".admin-only").forEach(el => el.style.display = "none");
@@ -1458,6 +1681,7 @@ window.activarAdmin = function(){
     const pass = prompt("Contraseña admin");
     if(pass === "altamarino"){
         admin = true;
+        localStorage.setItem("copaAdmin", "1");
         document.querySelectorAll(".admin-only").forEach(el => el.style.display = "block");
     } else {
         alert("Contraseña incorrecta");
@@ -1474,6 +1698,9 @@ llenarSelects();
 renderFechasTabs();
 activarVista();
 escucharCambios();
+escucharTrofeo();
+registrarVisita();
+escucharVisitas();
 
 </script>
 
