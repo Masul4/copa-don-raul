@@ -247,6 +247,16 @@ button:hover{
     flex-shrink:0;
 }
 
+.equipo-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    margin-top:3px;
+    background:#0f172a;
+    border-radius:20px;
+    padding:2px 8px 2px 4px;
+}
+
 .goleador-texto{
     display:flex;
     flex-direction:column;
@@ -746,6 +756,7 @@ const refEscudos    = doc(db, "copa", "escudos");
 const refPlantillas = doc(db, "copa", "plantillas");
 const refVisitas    = doc(db, "copa", "visitas");
 const refTrofeo     = doc(db, "copa", "trofeo");
+const refFotos      = doc(db, "copa", "fotos");
 
 // Token de escritura — debe coincidir con copa/adminSecret.token en Firestore
 const ADMIN_TOKEN = "CopaRaul2025xK9mR!";
@@ -807,6 +818,36 @@ function escucharTrofeo(){
     });
 }
 
+async function guardarFotos(){
+    try {
+        await setDoc(refFotos, { mapa: fotos, adminToken: ADMIN_TOKEN });
+    } catch(e){ console.error(e); }
+}
+
+function escucharFotos(){
+    onSnapshot(refFotos, snap => {
+        fotos = snap.exists() ? (snap.data().mapa || {}) : {};
+        actualizarGoleadores();
+        actualizarMVPs();
+    }, () => {});
+}
+
+window.subirFotoJugador = function(event, jugador){
+    const file = event.target.files[0];
+    if(!file) return;
+    const img    = new Image();
+    const reader = new FileReader();
+    reader.onload = e => { img.src = e.target.result; };
+    img.onload = function(){
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = 200;
+        canvas.getContext("2d").drawImage(img, 0, 0, 200, 200);
+        fotos[jugador] = canvas.toDataURL("image/jpeg", 0.8);
+        guardarFotos();
+    };
+    reader.readAsDataURL(file);
+};
+
 function escucharCambios(){
     onSnapshot(refPartidos, (snap) => {
         if(snap.exists()){
@@ -855,6 +896,7 @@ let equipos   = [];
 let partidos  = [];
 let escudos   = {};
 let plantillas = {}; // { "NombreEquipo": ["Jugador1", "Jugador2", ...] }
+let fotos     = {}; // { "NombreJugador": "data:image/jpeg;base64,..." }
 let editando  = -1;
 let admin     = false;
 let fechaActiva = 1;
@@ -1461,6 +1503,27 @@ function actualizarHistorial(){
 }
 
 // ── Goleadores ─────────────────────────────────────────────────────
+function buildJugadorInfo(nombre, equipo){
+    const foto = fotos[nombre];
+    if(foto){
+        return `
+        <img src="${foto}" class="escudo" style="object-fit:cover;">
+        <div class="goleador-texto">
+            <div><b>${nombre}</b></div>
+            <div class="equipo-pill">
+                <img src="${escudos[equipo] || ESCUDO_DEFAULT}" style="width:16px;height:16px;border-radius:50%;object-fit:cover;border:1px solid #475569;">
+                <span style="font-size:11px; opacity:0.7;">${equipo}</span>
+            </div>
+        </div>`;
+    }
+    return `
+    <img src="${escudos[equipo] || ESCUDO_DEFAULT}" class="escudo">
+    <div class="goleador-texto">
+        <div><b>${nombre}</b></div>
+        <div class="small">${equipo}</div>
+    </div>`;
+}
+
 function actualizarGoleadores(){
     const tabla = document.getElementById("tablaGoleadores");
     let goleadores = {};
@@ -1486,6 +1549,7 @@ function actualizarGoleadores(){
     }
 
     let posicion = 0, ultimoGoles = null, salto = 0;
+    let html = "";
 
     ordenados.forEach(([nombre, data], index) => {
         if(ultimoGoles === null || data.goles < ultimoGoles){
@@ -1496,19 +1560,14 @@ function actualizarGoleadores(){
         }
         ultimoGoles = data.goles;
 
-        tabla.innerHTML += `
+        html += `
         <div class="goleador">
             <div style="font-size:18px; font-weight:bold; width:40px;">#${posicion}</div>
-            <div class="goleador-info">
-                <img src="${escudos[data.equipo] || ESCUDO_DEFAULT}" class="escudo">
-                <div class="goleador-texto">
-                    <div><b>${nombre}</b></div>
-                    <div class="small">${data.equipo}</div>
-                </div>
-            </div>
+            <div class="goleador-info">${buildJugadorInfo(nombre, data.equipo)}</div>
             <div style="display:flex; align-items:center; gap:6px; font-weight:bold;"><span style="font-size:18px;">⚽</span><span style="font-size:20px;">${data.goles}</span></div>
         </div>`;
     });
+    tabla.innerHTML = html;
 }
 
 // ── Tab switch Goleadores / MVPs ──────────────────────────────────
@@ -1558,6 +1617,7 @@ function actualizarMVPs(){
     }
 
     let posicion = 0, ultimoVeces = null, salto = 0;
+    let html = "";
     ordenados.forEach((data, index) => {
         if(ultimoVeces === null || data.veces < ultimoVeces){
             posicion = index + 1;
@@ -1567,19 +1627,24 @@ function actualizarMVPs(){
         }
         ultimoVeces = data.veces;
 
-        tabla.innerHTML += `
+        const inputId = "fotoInput_" + data.jugador.replace(/[^a-z0-9]/gi, "");
+        const fotoBtn = admin ? `
+        <label for="${inputId}" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:#1e3a5f; border:1px solid #2563eb; font-size:13px; flex-shrink:0;" title="Subir foto">
+            📷
+            <input type="file" id="${inputId}" accept="image/*" style="display:none;" onchange="subirFotoJugador(event, '${data.jugador}')">
+        </label>` : "";
+
+        html += `
         <div class="goleador">
             <div style="font-size:18px; font-weight:bold; width:40px;">#${posicion}</div>
-            <div class="goleador-info">
-                <img src="${escudos[data.equipo] || ESCUDO_DEFAULT}" class="escudo">
-                <div class="goleador-texto">
-                    <div><b>${data.jugador}</b></div>
-                    <div class="small">${data.equipo}</div>
-                </div>
+            <div class="goleador-info">${buildJugadorInfo(data.jugador, data.equipo)}</div>
+            <div style="display:flex; align-items:center; gap:8px; margin-left:auto;">
+                ${fotoBtn}
+                <div style="display:flex; align-items:center; gap:6px; font-weight:bold; color:#fcd34d;"><span style="font-size:18px;">🌟</span><span style="font-size:20px;">${data.veces}</span></div>
             </div>
-            <div style="display:flex; align-items:center; gap:6px; font-weight:bold; color:#fcd34d;"><span style="font-size:18px;">🌟</span><span style="font-size:20px;">${data.veces}</span></div>
         </div>`;
     });
+    tabla.innerHTML = html;
 }
 
 // ── Formulario de partido ──────────────────────────────────────────
@@ -2033,6 +2098,7 @@ function escucharVisitas(){
 window.activarVista = function(){
     admin = false;
     document.querySelectorAll(".admin-only").forEach(el => el.style.display = "none");
+    actualizarMVPs();
 };
 
 // Hash SHA-256 de "altamarino" — la contraseña real nunca está en el código
@@ -2080,6 +2146,7 @@ window.submitAdminPass = async function(){
         admin = true;
         localStorage.setItem("copaAdmin", "1");
         document.querySelectorAll(".admin-only").forEach(el => el.style.display = "block");
+        actualizarMVPs();
         cerrarModalAdmin();
     } else {
         // Temblor + mensaje de error
@@ -2108,6 +2175,7 @@ renderFechasTabs();
 activarVista();
 escucharCambios();
 escucharTrofeo();
+escucharFotos();
 registrarVisita();
 escucharVisitas();
 
