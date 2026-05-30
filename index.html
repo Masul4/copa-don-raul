@@ -210,10 +210,15 @@ button:hover{
     left:0;
     width:100%;
     height:100%;
-    background:rgba(0,0,0,0.8);
+    background:rgba(0,0,0,0);
     padding:40px;
     overflow:auto;
     z-index:999;
+    transition:background 0.25s ease;
+}
+
+.modal.modal-visible{
+    background:rgba(0,0,0,0.8);
 }
 
 .modal-content{
@@ -222,6 +227,14 @@ button:hover{
     margin:auto;
     padding:25px;
     border-radius:16px;
+    opacity:0;
+    transform:translateY(28px) scale(0.97);
+    transition:opacity 0.28s ease, transform 0.28s cubic-bezier(0.34,1.3,0.64,1);
+}
+
+.modal.modal-visible .modal-content{
+    opacity:1;
+    transform:translateY(0) scale(1);
 }
 
 .goleador{
@@ -681,7 +694,7 @@ Guardar Partido
 </div>
 
 <!-- Modal perfil jugador MVP -->
-<div id="modalPerfilJugador" class="modal">
+<div id="modalPerfilJugador" class="modal" style="z-index:1001;">
 <div class="modal-content" style="max-width:480px; padding:0; overflow:hidden; border-radius:20px;">
     <div id="contenidoPerfilJugador"></div>
 </div>
@@ -962,7 +975,8 @@ window.subirEscudo = function(event, equipo){
 };
 
 function recalcularTabla(){
-    iniciarEquipos();
+    
+iniciarEquipos();
 
     partidos.forEach(p => {
         const e1 = equipos.find(e => e.nombre === p.equipo1);
@@ -1086,7 +1100,7 @@ window.verHistorialEquipo = function(nombre){
 
     if(partidosEquipo.length === 0){
         contenedor.innerHTML = "<p style='opacity:0.6; text-align:center; padding:20px;'>Sin partidos jugados.</p>";
-        document.getElementById("modalHistorialEquipo").style.display = "block";
+        abrirModal("modalHistorialEquipo");
         return;
     }
 
@@ -1180,7 +1194,7 @@ window.verHistorialEquipo = function(nombre){
         </div>`;
     });
 
-    document.getElementById("modalHistorialEquipo").style.display = "block";
+    abrirModal("modalHistorialEquipo");
 };
 
 window.toggleGolesHistorial = function(id){
@@ -1189,7 +1203,7 @@ window.toggleGolesHistorial = function(id){
 };
 
 window.cerrarModalHistorial = function(){
-    document.getElementById("modalHistorialEquipo").style.display = "none";
+    cerrarModal("modalHistorialEquipo");
 };
 
 let _equipoHistorialActual = "";
@@ -1713,11 +1727,11 @@ window.verPerfilJugador = function(jugador, equipo){
         <button onclick="cerrarPerfilJugador()" style="width:100%;background:#1e293b;border:1px solid #334155;padding:12px;border-radius:12px;font-size:14px;">Cerrar</button>
     </div>`;
 
-    document.getElementById("modalPerfilJugador").style.display = "block";
+    abrirModal("modalPerfilJugador");
 };
 
 window.cerrarPerfilJugador = function(){
-    document.getElementById("modalPerfilJugador").style.display = "none";
+    cerrarModal("modalPerfilJugador");
 };
 
 // ── Formulario de partido ──────────────────────────────────────────
@@ -1873,7 +1887,7 @@ window.editarPartido = function(index){
     `;
 
     editando = index;
-    document.getElementById("modalEditar").style.display = "block";
+    abrirModal("modalEditar");
 };
 
 window.revisarEmpateModal = function(){
@@ -2018,7 +2032,7 @@ window.guardarEdicionCompleta = async function(){
 };
 
 window.cerrarModalEditar = function(){
-    document.getElementById("modalEditar").style.display = "none";
+    cerrarModal("modalEditar");
     editando = -1;
 };
 
@@ -2111,12 +2125,10 @@ window.verGoles = function(index){
     </div>`;
 
     document.getElementById("contenidoGoles").innerHTML = html;
-    document.getElementById("modalGoles").style.display = "block";
+    abrirModal("modalGoles");
 };
 
-window.cerrarModal = function(){
-    document.getElementById("modalGoles").style.display = "none";
-};
+
 
 // ── Visitas ────────────────────────────────────────────────────────
 async function registrarVisita(){
@@ -2255,6 +2267,23 @@ escucharTrofeo();
 escucharFotos();
 registrarVisita();
 escucharVisitas();
+
+// ── Animaciones de modales ─────────────────────────────────────────
+function abrirModal(id){
+    const el = document.getElementById(id);
+    el.style.display = "block";
+    void el.offsetWidth;
+    el.classList.add("modal-visible");
+}
+
+function cerrarModal(id){
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.classList.remove("modal-visible");
+    setTimeout(() => { el.style.display = "none"; }, 280);
+}
+
+window.cerrarModal = function(){ cerrarModal("modalGoles"); };
 
 </script>
 
