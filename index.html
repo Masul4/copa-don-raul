@@ -250,11 +250,13 @@ button:hover{
 .equipo-pill{
     display:inline-flex;
     align-items:center;
+    align-self:flex-start;
     gap:5px;
     margin-top:3px;
     background:#0f172a;
     border-radius:20px;
     padding:2px 8px 2px 4px;
+    width:fit-content;
 }
 
 .goleador-texto{
@@ -675,6 +677,13 @@ Guardar Partido
 <h2>Goles del partido</h2>
 <div id="contenidoGoles"></div>
 <button style="margin-top:20px;" onclick="cerrarModal()">Cerrar</button>
+</div>
+</div>
+
+<!-- Modal perfil jugador MVP -->
+<div id="modalPerfilJugador" class="modal">
+<div class="modal-content" style="max-width:480px; padding:0; overflow:hidden; border-radius:20px;">
+    <div id="contenidoPerfilJugador"></div>
 </div>
 </div>
 
@@ -1238,14 +1247,16 @@ function renderPlantilla(nombre){
         const mvpTag = mvpV > 0
             ? `<span style="font-size:11px; font-weight:bold; color:#fcd34d; display:inline-flex; align-items:center; gap:3px;">🌟 ${mvpV}</span>`
             : "";
+        const esMVP = mvpV > 0;
+        const clickAttr = esMVP ? `style="display:flex; align-items:center; gap:10px; background:#1e293b; border:1px solid #334155; border-radius:10px; padding:10px 14px; min-width:180px; cursor:pointer;" onclick="verPerfilJugador('${j}', '${nombre}')"` : `style="display:flex; align-items:center; gap:10px; background:#1e293b; border:1px solid #334155; border-radius:10px; padding:10px 14px; min-width:180px;"`;
         html += `
-        <div style="display:flex; align-items:center; gap:10px; background:#1e293b; border:1px solid #334155; border-radius:10px; padding:10px 14px; min-width:180px;">
+        <div ${clickAttr}>
             <div style="width:32px; height:32px; border-radius:50%; background:#2563eb; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; flex-shrink:0;">${i+1}</div>
             <div style="display:flex; flex-direction:column; gap:2px;">
                 <span style="font-size:14px; font-weight:600; line-height:1.2;">${j}</span>
                 <div style="display:flex; align-items:center; flex-wrap:wrap;">${golesTag}${mvpTag}</div>
             </div>
-            ${admin ? `<div style="display:flex; gap:4px; margin-left:auto;">
+            ${admin ? `<div style="display:flex; gap:4px; margin-left:auto;" onclick="event.stopPropagation()">
                 <button onclick="editarJugador('${nombre}', ${i})" style="padding:4px 8px; font-size:11px; background:#d97706;">✏️</button>
                 <button onclick="borrarJugador('${nombre}', ${i})" style="padding:4px 8px; font-size:11px; background:#dc2626;">🗑</button>
             </div>` : ""}
@@ -1550,6 +1561,7 @@ function actualizarGoleadores(){
 
     let posicion = 0, ultimoGoles = null, salto = 0;
     let html = "";
+    const mvpJugadores = new Set(partidos.filter(p => p.mvp && p.mvp.jugador).map(p => p.mvp.jugador));
 
     ordenados.forEach(([nombre, data], index) => {
         if(ultimoGoles === null || data.goles < ultimoGoles){
@@ -1560,11 +1572,16 @@ function actualizarGoleadores(){
         }
         ultimoGoles = data.goles;
 
+        const esMVP = mvpJugadores.has(nombre);
+        const clickAttr = esMVP ? `style="cursor:pointer;" onclick="verPerfilJugador('${nombre}', '${data.equipo}')"` : "";
+
         html += `
-        <div class="goleador">
+        <div class="goleador" ${clickAttr}>
             <div style="font-size:18px; font-weight:bold; width:40px;">#${posicion}</div>
             <div class="goleador-info">${buildJugadorInfo(nombre, data.equipo)}</div>
-            <div style="display:flex; align-items:center; gap:6px; font-weight:bold;"><span style="font-size:18px;">⚽</span><span style="font-size:20px;">${data.goles}</span></div>
+            <div style="display:flex;align-items:center;gap:6px;font-weight:bold;">
+                <span style="font-size:18px;">⚽</span><span style="font-size:20px;">${data.goles}</span>
+            </div>
         </div>`;
     });
     tabla.innerHTML = html;
@@ -1635,7 +1652,7 @@ function actualizarMVPs(){
         </label>` : "";
 
         html += `
-        <div class="goleador">
+        <div class="goleador" style="cursor:pointer;" onclick="verPerfilJugador('${data.jugador}', '${data.equipo}')">
             <div style="font-size:18px; font-weight:bold; width:40px;">#${posicion}</div>
             <div class="goleador-info">${buildJugadorInfo(data.jugador, data.equipo)}</div>
             <div style="display:flex; align-items:center; gap:8px; margin-left:auto;">
@@ -1646,6 +1663,62 @@ function actualizarMVPs(){
     });
     tabla.innerHTML = html;
 }
+
+// ── Perfil jugador MVP ─────────────────────────────────────────────
+
+window.verPerfilJugador = function(jugador, equipo){
+    const foto = fotos[jugador];
+
+    // Calcular goles y MVPs reales
+    let golesTotal = 0;
+    partidos.forEach(p => {
+        if(!p.goles) return;
+        p.goles.forEach(g => {
+            if(!g.ownGoal && g.jugador === jugador) golesTotal += (g.cantidad || 1);
+        });
+    });
+    const mvpsTotal = partidos.filter(p => p.mvp && p.mvp.jugador === jugador).length;
+
+    const fotoHTML = foto
+        ? `<img src="${foto}" style="width:110px;height:110px;border-radius:50%;border:4px solid #fbbf24;object-fit:cover;box-shadow:0 0 24px rgba(251,191,36,0.4);">`
+        : `<div style="width:110px;height:110px;border-radius:50%;border:4px solid #334155;background:#1e293b;display:flex;align-items:center;justify-content:center;font-size:40px;">👤</div>`;
+
+    document.getElementById("contenidoPerfilJugador").innerHTML = `
+    <div style="background:linear-gradient(160deg,#0f172a,#1e293b);padding:32px 24px 24px;">
+
+        <!-- Header foto + nombre -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:24px;">
+            ${fotoHTML}
+            <div style="text-align:center;">
+                <div style="font-size:22px;font-weight:900;letter-spacing:0.01em;">${jugador}</div>
+                <div class="equipo-pill" style="margin:6px auto 0;justify-content:center;">
+                    <img src="${escudos[equipo]||ESCUDO_DEFAULT}" style="width:16px;height:16px;border-radius:50%;object-fit:cover;border:1px solid #475569;">
+                    <span style="font-size:12px;opacity:0.7;">${equipo}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+            <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:14px;text-align:center;">
+                <div style="font-size:28px;font-weight:900;">⚽ ${golesTotal}</div>
+                <div style="font-size:11px;opacity:0.5;margin-top:4px;text-transform:uppercase;letter-spacing:0.08em;">Goles</div>
+            </div>
+            <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:14px;text-align:center;">
+                <div style="font-size:28px;font-weight:900;color:#fcd34d;">🌟 ${mvpsTotal}</div>
+                <div style="font-size:11px;opacity:0.5;margin-top:4px;text-transform:uppercase;letter-spacing:0.08em;">MVPs</div>
+            </div>
+        </div>
+
+        <button onclick="cerrarPerfilJugador()" style="width:100%;background:#1e293b;border:1px solid #334155;padding:12px;border-radius:12px;font-size:14px;">Cerrar</button>
+    </div>`;
+
+    document.getElementById("modalPerfilJugador").style.display = "block";
+};
+
+window.cerrarPerfilJugador = function(){
+    document.getElementById("modalPerfilJugador").style.display = "none";
+};
 
 // ── Formulario de partido ──────────────────────────────────────────
 window.revisarEmpate = function(){
@@ -1918,13 +1991,17 @@ window.guardarEdicionCompleta = async function(){
     if(g1 === g2){
         const p1v = document.getElementById("edit_pen1")?.value;
         const p2v = document.getElementById("edit_pen2")?.value;
-        if(p1v !== "" && p2v !== ""){
-            pen1 = Number(p1v);
-            pen2 = Number(p2v);
-            if(pen1 !== pen2){
-                ganadorPenales = pen1 > pen2 ? eq1 : eq2;
-            }
+        if(p1v === "" || p2v === ""){
+            alert("Ingresa el resultado de los penales");
+            return;
         }
+        pen1 = Number(p1v);
+        pen2 = Number(p2v);
+        if(pen1 === pen2){
+            alert("El resultado de penales no puede ser empate");
+            return;
+        }
+        ganadorPenales = pen1 > pen2 ? eq1 : eq2;
     }
     // MVP
     let mvp = null;
