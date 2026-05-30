@@ -747,6 +747,9 @@ const refPlantillas = doc(db, "copa", "plantillas");
 const refVisitas    = doc(db, "copa", "visitas");
 const refTrofeo     = doc(db, "copa", "trofeo");
 
+// Token de escritura — debe coincidir con copa/adminSecret.token en Firestore
+const ADMIN_TOKEN = "CopaRaul2025xK9mR!";
+
 function setSyncStatus(estado){
     const el = document.getElementById("syncStatus");
     if(estado === "ok"){
@@ -764,9 +767,9 @@ function setSyncStatus(estado){
 async function guardarDatos(){
     setSyncStatus("loading");
     try {
-        await setDoc(refPartidos,   { lista: partidos });
-        await setDoc(refEscudos,    { mapa: escudos   });
-        await setDoc(refPlantillas, { mapa: plantillas });
+        await setDoc(refPartidos,   { lista: partidos,    adminToken: ADMIN_TOKEN });
+        await setDoc(refEscudos,    { mapa: escudos,      adminToken: ADMIN_TOKEN });
+        await setDoc(refPlantillas, { mapa: plantillas,   adminToken: ADMIN_TOKEN });
         setSyncStatus("ok");
     } catch(e){
         console.error(e);
@@ -786,7 +789,7 @@ window.subirTrofeo = function(event){
         canvas.width = 200; canvas.height = 200;
         ctx.drawImage(img, 0, 0, 200, 200);
         const data = canvas.toDataURL("image/png", 0.9);
-        setDoc(refTrofeo, { img: data }).then(() => aplicarTrofeo(data));
+        setDoc(refTrofeo, { img: data, adminToken: ADMIN_TOKEN }).then(() => aplicarTrofeo(data));
     };
     reader.readAsDataURL(file);
 };
@@ -1987,7 +1990,7 @@ async function registrarVisita(){
             ts:    ahora.getTime()
         };
         const log = [...(data.log || []), entrada].slice(-100);
-        await setDoc(refVisitas, { total: (data.total || 0) + 1, log });
+        await setDoc(refVisitas, { total: (data.total || 0) + 1, log, adminToken: "__visita__" });
     } catch(e){ console.warn("visitas:", e); }
 }
 
