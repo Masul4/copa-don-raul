@@ -609,127 +609,206 @@ button:hover{
 
 @media(max-width:600px){
 
-    /* Evitar overflow horizontal */
+    /* ── Base ── */
     html, body {
         overflow-x: hidden;
         width: 100%;
     }
 
-    * {
-        max-width: 100%;
-    }
-
-    /* Container más compacto */
     .container {
         width: 100%;
         padding: 10px;
     }
 
-    /* Header más compacto */
+    /* ── Header ── */
     header {
-        padding: 12px 10px;
+        padding: 10px;
     }
-
     header img {
-        width: 52px !important;
-        height: 52px !important;
+        width: 48px !important;
+        height: 48px !important;
     }
-
     header h1 {
-        font-size: 22px !important;
+        font-size: 20px !important;
     }
 
-    /* Barra admin */
+    /* ── Barras superiores ── */
     #modoContainer {
         padding: 6px 10px;
         gap: 6px;
         flex-wrap: wrap;
         justify-content: center;
     }
-
     #modoContainer button {
         font-size: 12px !important;
         padding: 6px 12px !important;
     }
-
-    /* Barra creador */
     #creadorBar {
         padding: 6px 10px;
     }
-
     #modoColorBtn {
         font-size: 12px !important;
         padding: 5px 10px !important;
     }
-
     #creador {
         font-size: 12px !important;
         padding: 5px 10px !important;
     }
-
-    /* Tabla de posiciones */
-    .tabla-wrapper {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+    #syncBadge {
+        font-size: 11px !important;
+        padding: 3px 10px !important;
     }
 
-    table {
-        font-size: 12px;
-        min-width: unset;
-        width: 100%;
-    }
-
-    th, td {
-        padding: 5px 5px;
-        white-space: nowrap;
-    }
-
-    /* Escudos más pequeños en tabla */
-    .tabla-wrapper img {
-        width: 30px !important;
-        height: 30px !important;
-    }
-
-    /* Columna equipo texto alineado */
-    td:nth-child(2) {
-        text-align: left;
-        max-width: 90px;
-        white-space: normal;
-        word-break: break-word;
-    }
-
-    /* Cards */
+    /* ── Cards ── */
     .card {
         padding: 10px 12px;
         border-radius: 12px;
     }
-
     .card h2 {
         font-size: 16px;
     }
 
-    /* Tabs de fechas */
+    /* ── Tabla de posiciones: scroll horizontal, sin quiebre de texto ── */
+    .tabla-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    table {
+        font-size: 12px;
+        width: auto;
+        min-width: 100%;
+    }
+    th, td {
+        padding: 5px 6px;
+        white-space: nowrap;
+    }
+    .tabla-wrapper img {
+        width: 28px !important;
+        height: 28px !important;
+    }
+
+    /* ── Tabs de fechas ── */
     .fecha-tab {
         padding: 5px 11px;
         font-size: 11px;
     }
 
-    /* Partidos */
+    /* ── Partidos: layout fijo para que el marcador no tape escudos ── */
     .partido {
         padding: 10px 12px !important;
         font-size: 13px;
     }
 
-    /* Goleadores */
+    /* ── Goleadores ── */
     .goleador {
         padding: 8px 10px !important;
         border-radius: 10px !important;
     }
 
-    /* Sync badge */
-    #syncBadge {
-        font-size: 11px !important;
-        padding: 3px 10px !important;
+    /* ── Modal historial equipo: ancho completo ── */
+    .modal {
+        padding: 10px !important;
+    }
+    .modal-content {
+        padding: 16px 14px !important;
+        border-radius: 12px !important;
+    }
+}
+
+/* ── Bracket desktop ── */
+.bracket-wrapper {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    max-width: 640px;
+    overflow: hidden;
+}
+.bracket-semis {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0;
+    flex: 1;
+}
+.bracket-semi {
+    /* spaced naturally by justify-content */
+}
+.bracket-semis .bracket-semi:first-child {
+    margin-bottom: 32px;
+}
+.bracket-svg-desktop {
+    width: 60px;
+    flex-shrink: 0;
+    position: relative;
+}
+.bracket-final {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+}
+.bracket-arrow-mobile {
+    display: none;
+}
+
+/* ── Partido historial - marcador centrado sin tapar ── */
+.partido-historial .marcador {
+    flex-wrap: nowrap;
+}
+
+@media(max-width:600px){
+
+    /* Bracket vertical en mobile */
+    .bracket-wrapper {
+        flex-direction: column;
+        gap: 16px;
+        max-width: 100%;
+        overflow: visible;
+    }
+    .bracket-semis {
+        flex-direction: column;
+        gap: 16px;
+    }
+    .bracket-semis .bracket-semi:first-child {
+        margin-bottom: 0;
+    }
+    .bracket-svg-desktop {
+        display: none;
+    }
+    .bracket-arrow-mobile {
+        display: block;
+        text-align: center;
+        font-size: 13px;
+        font-weight: bold;
+        opacity: 0.5;
+        padding: 4px 0;
+    }
+    .bracket-final {
+        justify-content: flex-start;
+    }
+
+    /* Partido: marcador nunca se envuelve, escudos más pequeños */
+    .partido-historial .marcador {
+        flex-wrap: nowrap;
+        gap: 6px;
+        font-size: 13px;
+    }
+    .partido-historial .marcador img.escudo {
+        width: 28px !important;
+        height: 28px !important;
+    }
+    .partido-historial .marcador > div:nth-child(2),
+    .partido-historial .marcador > div:nth-child(4) {
+        flex: 1;
+        min-width: 0;
+    }
+    .partido-historial .marcador > div:nth-child(2) span,
+    .partido-historial .marcador > div:nth-child(4) span {
+        font-size: 11px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;
     }
 }
 
@@ -1410,7 +1489,7 @@ window.verHistorialEquipo = function(nombre){
 
                 <div style="display:flex; align-items:center; gap:8px; flex:1;">
                     <img src="${escudos[p.equipo2] || ESCUDO_DEFAULT}" class="escudo" style="width:36px;height:36px;">
-                    <span style="font-size:13px;">${p.equipo2}</span>
+                    <span style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80px;">${p.equipo2}</span>
                 </div>
 
                 <span style="font-size:11px; opacity:0.5;">Fecha ${p.fecha || 1}</span>
@@ -1489,7 +1568,8 @@ function renderPlantilla(nombre){
         mvpsJugador[p.mvp.jugador] = (mvpsJugador[p.mvp.jugador] || 0) + 1;
     });
 
-    let html = `<div style="display:flex; flex-wrap:wrap; gap:10px;">`;
+    const isMobile = window.innerWidth <= 600;
+    let html = `<div style="display:grid; grid-template-columns:${isMobile ? "1fr 1fr" : "repeat(auto-fill, minmax(180px, 1fr))"}; gap:8px;">`;
     jugadores.forEach((j, i) => {
         const goles = golesJugador[j] || 0;
         const mvpV  = mvpsJugador[j] || 0;
@@ -1500,7 +1580,7 @@ function renderPlantilla(nombre){
             ? `<span style="font-size:11px; font-weight:bold; color:#fcd34d; display:inline-flex; align-items:center; gap:3px;">🌟 ${mvpV}</span>`
             : "";
         const esMVP = mvpV > 0;
-        const clickAttr = esMVP ? `style="display:flex; align-items:center; gap:10px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:10px 14px; min-width:180px; cursor:pointer;" onclick="verPerfilJugador('${j}', '${nombre}')"` : `style="display:flex; align-items:center; gap:10px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:10px 14px; min-width:180px;"`;
+        const clickAttr = esMVP ? `style="display:flex; align-items:center; gap:10px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:10px 14px; cursor:pointer;" onclick="verPerfilJugador('${j}', '${nombre}')"` : `style="display:flex; align-items:center; gap:10px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:10px 14px;"`;
         html += `
         <div ${clickAttr}>
             <div style="width:32px; height:32px; border-radius:50%; background:#2563eb; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; flex-shrink:0;">${i+1}</div>
@@ -1628,7 +1708,7 @@ function renderBracket(tipo){
         const nombre = eq.nombre || "A definir";
         const src = (eq.nombre && escudos[eq.nombre]) ? escudos[eq.nombre] : ESCUDO_DEFAULT;
         return `
-        <div style="display:flex;align-items:center;gap:10px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:10px 14px;min-width:180px;">
+        <div style="display:flex;align-items:center;gap:10px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
             <img src="${src}" style="width:30px;height:30px;border-radius:50%;border:1px solid #fff;object-fit:cover;flex-shrink:0;">
             <span style="font-size:13px;font-weight:600;">${nombre}</span>
         </div>`;
@@ -1649,13 +1729,13 @@ function renderBracket(tipo){
             ${!listos ? '<span style="font-size:12px;font-weight:400;opacity:0.45;margin-left:8px;">Los cruces se revelarán al terminar todas las fechas</span>' : ''}
         </div>
 
-        <div style="display:flex;align-items:stretch;gap:0;max-width:640px;">
+        <div class="bracket-wrapper">
 
             <!-- Columna semifinales -->
-            <div style="display:flex;flex-direction:column;justify-content:space-between;gap:0;flex:1;">
+            <div class="bracket-semis">
 
                 <!-- SF1 -->
-                <div>
+                <div class="bracket-semi">
                     <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;opacity:0.45;margin-bottom:6px;">Semifinal 1</div>
                     <div style="display:flex;flex-direction:column;gap:6px;">
                         ${slot(s1)}
@@ -1663,11 +1743,8 @@ function renderBracket(tipo){
                     </div>
                 </div>
 
-                <!-- Espacio entre SF1 y SF2 -->
-                <div style="height:32px;"></div>
-
                 <!-- SF2 -->
-                <div>
+                <div class="bracket-semi">
                     <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;opacity:0.45;margin-bottom:6px;">Semifinal 2</div>
                     <div style="display:flex;flex-direction:column;gap:6px;">
                         ${slot(s3)}
@@ -1677,22 +1754,19 @@ function renderBracket(tipo){
 
             </div>
 
-            <!-- Conectores SVG -->
-            <div style="width:60px;flex-shrink:0;position:relative;">
+            <!-- Flecha al final en mobile / SVG en desktop -->
+            <div class="bracket-arrow-mobile">↓ Final</div>
+            <div class="bracket-svg-desktop">
                 <svg width="60" height="100%" viewBox="0 0 60 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="width:60px;height:100%;display:block;">
-                    <!-- Línea derecha SF1 (desde centro de SF1 hacia la derecha) -->
                     <line x1="0" y1="67" x2="30" y2="67" stroke="#475569" stroke-width="2"/>
-                    <!-- Línea derecha SF2 -->
                     <line x1="0" y1="233" x2="30" y2="233" stroke="#475569" stroke-width="2"/>
-                    <!-- Línea vertical uniendo ambas -->
                     <line x1="30" y1="67" x2="30" y2="233" stroke="#475569" stroke-width="2"/>
-                    <!-- Línea hacia la final (centro) -->
                     <line x1="30" y1="150" x2="60" y2="150" stroke="#475569" stroke-width="2"/>
                 </svg>
             </div>
 
             <!-- Columna final -->
-            <div style="display:flex;flex-direction:column;justify-content:center;flex:1;">
+            <div class="bracket-final">
                 <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;opacity:0.45;margin-bottom:6px;">Final</div>
                 <div style="display:flex;flex-direction:column;gap:6px;">
                     ${finalSlot()}
@@ -1731,11 +1805,11 @@ function actualizarHistorial(){
         const realIndex = p._idx;
         grid.innerHTML += `
         <div class="partido" onclick="verGoles(${realIndex})">
-            <div style="display:flex; align-items:center; justify-content:center; gap:10px; font-size:16px; font-weight:bold; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; justify-content:center; gap:6px; font-size:16px; font-weight:bold; flex-wrap:nowrap; overflow:hidden;">
 
                 <div style="display:flex; align-items:center; gap:8px; justify-content:space-between;
     transition:background 0.3s; flex:1; min-width:0;">
-                    <span style="text-align:right; font-size:13px;">${p.equipo1}</span>
+                    <span style="text-align:right; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80px;">${p.equipo1}</span>
                     <img src="${escudos[p.equipo1] || ESCUDO_DEFAULT}" class="escudo">
                 </div>
 
@@ -1747,7 +1821,7 @@ function actualizarHistorial(){
 
                 <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
                     <img src="${escudos[p.equipo2] || ESCUDO_DEFAULT}" class="escudo">
-                    <span style="font-size:13px;">${p.equipo2}</span>
+                    <span style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80px;">${p.equipo2}</span>
                 </div>
 
             </div>
