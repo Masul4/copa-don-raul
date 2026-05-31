@@ -655,29 +655,20 @@ button:hover{
     .col-pj, .col-eg, .col-ep, .col-gf, .col-gc {
         display: none;
     }
-    /* Ocultar nombre, mantener escudo compacto */
-    .col-nombre {
-        display: none;
-    }
-    .equipo-col {
-        gap: 0;
-        justify-content: center;
-    }
-    .tabla-wrapper .escudo {
-        width: 30px !important;
-        height: 30px !important;
-    }
+    .col-nombre { display: none; }
 
-    /* ── Tabla más compacta ── */
-    table {
-        font-size: 12px;
+    /* ── Partido card compacto ── */
+    .partido .escudo {
+        width: 28px !important;
+        height: 28px !important;
     }
-    th, td {
-        padding: 4px 5px;
+    .partido [style*="font-size:18px"] {
+        font-size: 14px !important;
+        padding: 4px 8px !important;
     }
-    .tabla-wrapper .escudo {
-        width: 32px !important;
-        height: 32px !important;
+    .partido [style*="max-width:80px"] {
+        max-width: none !important;
+        font-size: 11px !important;
     }
 
     /* Bracket vertical en mobile */
@@ -1296,7 +1287,12 @@ function actualizarTabla(){
         body.innerHTML += `
         <tr class="${clase}" onclick="verHistorialEquipo('${e.nombre}')" title="Ver historial de ${e.nombre}">
             <td>${index+1}</td>
-            <td class="col-equipo-nombre"><div class="equipo-col"><img src="${escudos[e.nombre] || ESCUDO_DEFAULT}" class="escudo"><span class="col-nombre">${e.nombre}</span></div></td>
+            <td>
+                <div class="equipo-col">
+                    <img src="${escudos[e.nombre] || ESCUDO_DEFAULT}" class="escudo">
+                    <span class="col-nombre">${e.nombre}</span>
+                </div>
+            </td>
             <td class="col-pj">${e.PJ}</td>
             <td>${e.G}</td>
             <td class="col-eg">${e.Eg}</td>
