@@ -655,8 +655,17 @@ button:hover{
     .col-pj, .col-eg, .col-ep, .col-gf, .col-gc {
         display: none;
     }
+    /* Ocultar nombre, mantener escudo compacto */
     .col-nombre {
         display: none;
+    }
+    .equipo-col {
+        gap: 0;
+        justify-content: center;
+    }
+    .tabla-wrapper .escudo {
+        width: 30px !important;
+        height: 30px !important;
     }
 
     /* ── Tabla más compacta ── */
@@ -1287,12 +1296,7 @@ function actualizarTabla(){
         body.innerHTML += `
         <tr class="${clase}" onclick="verHistorialEquipo('${e.nombre}')" title="Ver historial de ${e.nombre}">
             <td>${index+1}</td>
-            <td>
-                <div class="equipo-col">
-                    <img src="${escudos[e.nombre] || ESCUDO_DEFAULT}" class="escudo">
-                    <span class="col-nombre">${e.nombre}</span>
-                </div>
-            </td>
+            <td class="col-equipo-nombre"><div class="equipo-col"><img src="${escudos[e.nombre] || ESCUDO_DEFAULT}" class="escudo"><span class="col-nombre">${e.nombre}</span></div></td>
             <td class="col-pj">${e.PJ}</td>
             <td>${e.G}</td>
             <td class="col-eg">${e.Eg}</td>
