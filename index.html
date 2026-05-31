@@ -46,7 +46,7 @@
 }
 
 /* ── CSS Variables: Light ── */
-body.light, html.light body {
+body.light, html.light, html.light body {
     --bg-base:       #f1f5f9;
     --bg-mid:        #ffffff;
     --bg-card:       #ffffff;
@@ -605,6 +605,132 @@ button:hover{
 }
 .shake {
     animation:shake 0.45s ease;
+}
+
+@media(max-width:600px){
+
+    /* Evitar overflow horizontal */
+    html, body {
+        overflow-x: hidden;
+        width: 100%;
+    }
+
+    * {
+        max-width: 100%;
+    }
+
+    /* Container más compacto */
+    .container {
+        width: 100%;
+        padding: 10px;
+    }
+
+    /* Header más compacto */
+    header {
+        padding: 12px 10px;
+    }
+
+    header img {
+        width: 52px !important;
+        height: 52px !important;
+    }
+
+    header h1 {
+        font-size: 22px !important;
+    }
+
+    /* Barra admin */
+    #modoContainer {
+        padding: 6px 10px;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    #modoContainer button {
+        font-size: 12px !important;
+        padding: 6px 12px !important;
+    }
+
+    /* Barra creador */
+    #creadorBar {
+        padding: 6px 10px;
+    }
+
+    #modoColorBtn {
+        font-size: 12px !important;
+        padding: 5px 10px !important;
+    }
+
+    #creador {
+        font-size: 12px !important;
+        padding: 5px 10px !important;
+    }
+
+    /* Tabla de posiciones */
+    .tabla-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        font-size: 12px;
+        min-width: unset;
+        width: 100%;
+    }
+
+    th, td {
+        padding: 5px 5px;
+        white-space: nowrap;
+    }
+
+    /* Escudos más pequeños en tabla */
+    .tabla-wrapper img {
+        width: 30px !important;
+        height: 30px !important;
+    }
+
+    /* Columna equipo texto alineado */
+    td:nth-child(2) {
+        text-align: left;
+        max-width: 90px;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    /* Cards */
+    .card {
+        padding: 10px 12px;
+        border-radius: 12px;
+    }
+
+    .card h2 {
+        font-size: 16px;
+    }
+
+    /* Tabs de fechas */
+    .fecha-tab {
+        padding: 5px 11px;
+        font-size: 11px;
+    }
+
+    /* Partidos */
+    .partido {
+        padding: 10px 12px !important;
+        font-size: 13px;
+    }
+
+    /* Goleadores */
+    .goleador {
+        padding: 8px 10px !important;
+        border-radius: 10px !important;
+    }
+
+    /* Sync badge */
+    #syncBadge {
+        font-size: 11px !important;
+        padding: 3px 10px !important;
+    }
 }
 
 </style>
@@ -2401,22 +2527,24 @@ window.cerrarModal = function(){ cerrarModal("modalGoles"); };
 
 // ── Modo claro / oscuro ────────────────────────────────────────────
 window.toggleModoColor = function(){
-    const body = document.body;
-    const btn  = document.getElementById("modoColorBtn");
-    const isLight = body.classList.toggle("light");
+    const isLight = document.body.classList.toggle("light");
+    document.documentElement.classList.toggle("light", isLight);
+    const btn = document.getElementById("modoColorBtn");
     btn.textContent = isLight ? "☀️ Modo Claro" : "🌙 Modo Oscuro";
     localStorage.setItem("copaTheme", isLight ? "light" : "dark");
 };
 
-// Aplicar tema guardado al body
+// Sincronizar body con clase ya aplicada en <html> por el script del head
 (function(){
     const saved = localStorage.getItem("copaTheme");
     const btn = document.getElementById("modoColorBtn");
     if(saved === "light"){
         document.body.classList.add("light");
+        document.documentElement.classList.add("light");
         if(btn) btn.textContent = "☀️ Modo Claro";
     } else {
         document.body.classList.remove("light");
+        document.documentElement.classList.remove("light");
         if(btn) btn.textContent = "🌙 Modo Oscuro";
     }
 })();
