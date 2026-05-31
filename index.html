@@ -655,6 +655,9 @@ button:hover{
     .col-pj, .col-eg, .col-ep, .col-gf, .col-gc {
         display: none;
     }
+    .col-nombre {
+        display: none;
+    }
 
     /* Bracket vertical en mobile */
     .bracket-wrapper {
@@ -1275,7 +1278,7 @@ function actualizarTabla(){
             <td>
                 <div class="equipo-col">
                     <img src="${escudos[e.nombre] || ESCUDO_DEFAULT}" class="escudo">
-                    <span>${e.nombre}</span>
+                    <span class="col-nombre">${e.nombre}</span>
                 </div>
             </td>
             <td class="col-pj">${e.PJ}</td>
