@@ -5,82 +5,60 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Copa Don Raúl</title>
 
+<!-- Restaurar tema antes de pintar para evitar flash -->
+<script>
+(function(){
+    const saved = localStorage.getItem("copaTema");
+    if(saved === "light"){
+        document.documentElement.classList.add("light");
+        document.addEventListener("DOMContentLoaded", function(){
+            document.body.classList.add("light");
+        });
+    }
+})();
+</script>
+
 <style>
 
-/* ── CSS Variables: Dark (default) ── */
-:root {
-    --bg-base:       #0f172a;
-    --bg-mid:        #111827;
-    --bg-card:       #111827;
-    --bg-elevated:   #1e293b;
-    --bg-deep:       #0f172a;
-    --border:        #334155;
-    --border-subtle: #1e293b;
-    --text:          #ffffff;
-    --text-muted:    rgba(255,255,255,0.55);
-    --text-sub:      rgba(255,255,255,0.4);
-    --input-bg:      #1e293b;
-    --input-color:   #ffffff;
-    --pill-bg:       #0f172a;
-    --shadow:        rgba(0,0,0,0.3);
-    --shadow-modal:  rgba(0,0,0,0.6);
-    --gold-row:      #6b5200;
-    --silver-row:    #3a3a3a;
-    --partido-bg:    #1e293b;
-    --partido-hover: #334155;
-    --historial-bg:  #1e293b;
-    --historial-hover:#334155;
-    --goleador-bg:   #1e293b;
-    --modal-content: #111827;
-    --admin-box-bg:  linear-gradient(160deg,#0f172a 0%,#1e293b 100%);
-    --admin-input-bg:#0f172a;
-    --toggle-color:  #64748b;
-    --btn-cancel-color:#64748b;
-    --sync-text:     #ffffff;
-    --modo-bar-bg:   #111827;
-    --creator-bar-bg:#0f172a;
-    --header-border: #1e293b;
-    --tabla-th:      #1e293b;
-    --escudo-border: #ffffff;
-    --goles-detalle-border: #334155;
+/* ── CSS Variables: tema oscuro (default) ── */
+:root, html, body {
+    --bg-base:     #0f172a;
+    --bg-card:     #111827;
+    --bg-elevated: #1e293b;
+    --bg-deep:     #0f172a;
+    --border:      #334155;
+    --border-light:#1e293b;
+    --text:        #ffffff;
+    --text-muted:  rgba(255,255,255,0.7);
+    --text-dim:    rgba(255,255,255,0.4);
+    --th-bg:       #1e293b;
+    --pill-bg:     #0f172a;
+    --partido-bg:  #1e293b;
+    --partido-hover:#334155;
+    --input-bg:    #1e293b;
+    --score-bg:    #0f172a;
+    --syncbar-bg:  #111827;
 }
 
-/* ── CSS Variables: Light ── */
-body.light, html.light, html.light body {
-    --bg-base:       #f1f5f9;
-    --bg-mid:        #ffffff;
-    --bg-card:       #ffffff;
-    --bg-elevated:   #e2e8f0;
-    --bg-deep:       #f8fafc;
-    --border:        #cbd5e1;
-    --border-subtle: #e2e8f0;
-    --text:          #0f172a;
-    --text-muted:    rgba(15,23,42,0.6);
-    --text-sub:      rgba(15,23,42,0.4);
-    --input-bg:      #e2e8f0;
-    --input-color:   #0f172a;
-    --pill-bg:       #f1f5f9;
-    --shadow:        rgba(0,0,0,0.08);
-    --shadow-modal:  rgba(0,0,0,0.35);
-    --gold-row:      #fef3c7;
-    --silver-row:    #f1f5f9;
-    --partido-bg:    #e2e8f0;
-    --partido-hover: #cbd5e1;
-    --historial-bg:  #e2e8f0;
-    --historial-hover:#cbd5e1;
-    --goleador-bg:   #e2e8f0;
-    --modal-content: #ffffff;
-    --admin-box-bg:  linear-gradient(160deg,#f8fafc 0%,#e2e8f0 100%);
-    --admin-input-bg:#f8fafc;
-    --toggle-color:  #94a3b8;
-    --btn-cancel-color:#64748b;
-    --sync-text:     #ffffff;
-    --modo-bar-bg:   #ffffff;
-    --creator-bar-bg:#f8fafc;
-    --header-border: #e2e8f0;
-    --tabla-th:      #e2e8f0;
-    --escudo-border: #94a3b8;
-    --goles-detalle-border: #cbd5e1;
+/* ── Tema claro ── */
+html.light, body.light,
+html.light body, body.light {
+    --bg-base:     #f1f5f9;
+    --bg-card:     #ffffff;
+    --bg-elevated: #e2e8f0;
+    --bg-deep:     #cbd5e1;
+    --border:      #94a3b8;
+    --border-light:#cbd5e1;
+    --text:        #0f172a;
+    --text-muted:  rgba(15,23,42,0.7);
+    --text-dim:    rgba(15,23,42,0.4);
+    --th-bg:       #cbd5e1;
+    --pill-bg:     #e2e8f0;
+    --partido-bg:  #e2e8f0;
+    --partido-hover:#cbd5e1;
+    --input-bg:    #e2e8f0;
+    --score-bg:    #cbd5e1;
+    --syncbar-bg:  #ffffff;
 }
 
 *{
@@ -90,17 +68,17 @@ body.light, html.light, html.light body {
 body{
     margin:0;
     font-family:Arial,sans-serif;
-    background:var(--bg-base);
-    color:var(--text);
-    transition:background 0.3s, color 0.3s;
+    background: var(--bg-base);
+    color: var(--text);
+    transition: background 0.3s, color 0.3s;
 }
 
 header{
-    background:var(--bg-mid);
+    background: var(--bg-card);
     padding:20px;
     text-align:center;
-    border-bottom:2px solid var(--header-border);
-    transition:background 0.3s;
+    border-bottom:2px solid var(--border-light);
+    transition: background 0.3s;
 }
 
 .container{
@@ -123,12 +101,12 @@ header{
 }
 
 .card{
-    background:var(--bg-card);
+    background: var(--bg-card);
     border-radius:16px;
     padding:14px 16px;
-    box-shadow:0 0 10px var(--shadow);
+    box-shadow:0 0 10px rgba(0,0,0,0.3);
     border:2px solid var(--border);
-    transition:background 0.3s, border-color 0.3s;
+    transition: background 0.3s, border-color 0.3s;
 }
 
 table{
@@ -139,17 +117,18 @@ table{
 th, td{
     padding:8px 10px;
     text-align:center;
-    border-bottom:1px solid var(--border-subtle);
+    border-bottom:1px solid var(--border-light);
+    color: var(--text);
+    transition: color 0.3s;
 }
 
 th{
-    background:var(--tabla-th);
-    color:var(--text);
+    background: var(--th-bg);
+    transition: background 0.3s;
 }
 
 .gold{
-    background:var(--gold-row);
-    color:var(--text);
+    background:#6b5200;
 }
 
 .tabla-wrapper{
@@ -162,20 +141,20 @@ th{
     margin: 0 0 14px 0;
 }
 #creadorBar {
-    background:var(--creator-bar-bg);
+    background: var(--bg-base);
     display:flex;
     justify-content:space-between;
-    transition:background 0.3s;
     align-items:center;
     padding:8px 16px;
-    border-bottom:1px solid var(--border-subtle);
+    border-bottom:1px solid var(--border-light);
+    transition: background 0.3s;
 }
 
 #creador{
     text-decoration:none;
     font-size:14px;
     opacity:0.85;
-    color:var(--text);
+    color:white;
     display:flex;
     align-items:center;
     gap:7px;
@@ -191,8 +170,8 @@ th{
 }
 
 .silver{
-    background:var(--silver-row);
-    color:var(--text);
+    background:#999b9b;
+    color:#0f172a;
 }
 
 .equipo-col{
@@ -206,7 +185,7 @@ th{
     height: 56px;
     border-radius: 50%;
     background-color: #000000 !important;
-    border: 2px solid var(--escudo-border) !important;
+    border: 2px solid #ffffff !important;
     object-fit: cover;
     display: block;
     box-shadow: 0 0 8px rgba(0,0,0,0.5);
@@ -216,10 +195,11 @@ input, select{
     width:100%;
     padding:12px;
     margin-top:10px;
-    border:none;
+    border: 1px solid var(--border);
     border-radius:8px;
-    background:var(--input-bg);
-    color:var(--input-color);
+    background: var(--input-bg);
+    color: var(--text);
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
 }
 
 button{
@@ -227,7 +207,7 @@ button{
     border:none;
     border-radius:8px;
     background:#2563eb;
-    color:var(--text);
+    color:white;
     cursor:pointer;
     font-weight:bold;
 }
@@ -242,18 +222,18 @@ button:hover{
 }
 
 .partido{
-    background:var(--partido-bg);
+    background: var(--partido-bg);
     padding:12px;
     border-radius:12px;
     margin-bottom:12px;
     width:fit-content;
     min-width:430px;
     cursor:pointer;
-    transition:0.2s;
+    transition:background 0.2s, transform 0.2s;
 }
 
 .partido:hover{
-    background:var(--partido-hover);
+    background: var(--partido-hover);
     transform:scale(1.02);
 }
 
@@ -278,10 +258,9 @@ button:hover{
 
 #modoContainer{
     padding:10px;
-    background:var(--modo-bar-bg);
+    background: var(--syncbar-bg);
     text-align:center;
-    transition:background 0.3s;
-    color:var(--text);
+    transition: background 0.3s;
 }
 
 #modoContainer button{
@@ -295,43 +274,41 @@ button:hover{
     left:0;
     width:100%;
     height:100%;
-    background:rgba(0,0,0,0);
+    background:rgba(0,0,0,0.8);
     padding:40px;
     overflow:auto;
     z-index:999;
-    transition:background 0.25s ease;
+    opacity:0;
+    transition: opacity 0.25s ease;
 }
 
-.modal.modal-visible{
-    background:rgba(0,0,0,0.8);
+.modal.abierto {
+    opacity:1;
 }
 
 .modal-content{
-    background:var(--modal-content);
-    color:var(--text);
+    background: var(--bg-card);
     max-width:900px;
     margin:auto;
     padding:25px;
     border-radius:16px;
-    transition:background 0.3s;
-    opacity:0;
-    transform:translateY(28px) scale(0.97);
-    transition:opacity 0.28s ease, transform 0.28s cubic-bezier(0.34,1.3,0.64,1);
+    transform: translateY(24px);
+    transition: transform 0.28s cubic-bezier(0.34,1.3,0.64,1);
 }
 
-.modal.modal-visible .modal-content{
-    opacity:1;
-    transform:translateY(0) scale(1);
+.modal.abierto .modal-content {
+    transform: translateY(0);
 }
 
 .goleador{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    background:var(--goleador-bg);
+    background: var(--bg-elevated);
     padding:10px;
     border-radius:10px;
     margin-bottom:10px;
+    transition: background 0.3s;
 }
 
 .goleador-info{
@@ -353,10 +330,11 @@ button:hover{
     align-self:flex-start;
     gap:5px;
     margin-top:3px;
-    background:var(--pill-bg);
+    background: var(--pill-bg);
     border-radius:20px;
     padding:2px 8px 2px 4px;
     width:fit-content;
+    transition: background 0.3s;
 }
 
 .goleador-texto{
@@ -403,20 +381,21 @@ button:hover{
     border-radius:20px;
     border:2px solid var(--border);
     background:transparent;
-    color:var(--text);
+    color: var(--text);
     cursor:pointer;
     font-weight:bold;
     font-size:13px;
-    transition:0.2s;
+    transition: background 0.2s, color 0.2s, border-color 0.3s;
 }
 
 .fecha-tab.activa{
     background:#2563eb;
     border-color:#2563eb;
+    color:white;
 }
 
 .fecha-tab:hover:not(.activa){
-    background:var(--bg-elevated);
+    background: var(--bg-elevated);
 }
 
 .partidos-grid{
@@ -441,15 +420,15 @@ button:hover{
 
 /* ── Modal historial equipo ── */
 .partido-historial {
-    background:var(--historial-bg);
+    background: var(--bg-elevated);
     border-radius:12px;
     padding:14px 16px;
     margin-bottom:12px;
     cursor:pointer;
-    transition:0.2s;
+    transition: background 0.2s;
 }
 .partido-historial:hover {
-    background:var(--historial-hover);
+    background: var(--partido-hover);
 }
 .partido-historial .marcador {
     display:flex;
@@ -475,7 +454,7 @@ button:hover{
     display:none;
     margin-top:12px;
     padding-top:10px;
-    border-top:1px solid var(--goles-detalle-border);
+    border-top:1px solid var(--border);
 }
 .goles-detalle.abierto { display:block; }
 
@@ -495,9 +474,8 @@ button:hover{
     display:flex;
 }
 .admin-login-box {
-    background:var(--admin-box-bg);
-    border:1px solid var(--border);
-    color:var(--text);
+    background:linear-gradient(160deg,#0f172a 0%,#1e293b 100%);
+    border:1px solid #334155;
     border-radius:20px;
     padding:36px 32px;
     width:100%;
@@ -530,9 +508,9 @@ button:hover{
     width:100%;
     padding:13px 44px 13px 16px;
     border-radius:12px;
-    border:2px solid var(--border);
-    background:var(--admin-input-bg);
-    color:var(--text);
+    border:2px solid #334155;
+    background:#0f172a;
+    color:white;
     font-size:15px;
     letter-spacing:0.12em;
     margin-top:0;
@@ -553,13 +531,13 @@ button:hover{
     transform:translateY(-50%);
     background:none;
     border:none;
-    color:var(--toggle-color);
+    color:#64748b;
     cursor:pointer;
     padding:4px;
     font-size:16px;
     line-height:1;
 }
-.toggle-pass:hover { color:var(--text); background:none; }
+.toggle-pass:hover { color:white; background:none; }
 .admin-error-msg {
     color:#f87171;
     font-size:12px;
@@ -572,7 +550,7 @@ button:hover{
     padding:13px;
     border-radius:12px;
     background:linear-gradient(135deg,#1d4ed8,#2563eb);
-    color:var(--text);
+    color:white;
     font-size:15px;
     font-weight:700;
     border:none;
@@ -585,14 +563,14 @@ button:hover{
     margin-top:12px;
     background:none;
     border:none;
-    color:var(--btn-cancel-color);
+    color:#64748b;
     font-size:13px;
     cursor:pointer;
     padding:4px;
     width:100%;
     transition:color 0.2s;
 }
-.admin-login-box .btn-cancelar:hover { color:var(--text); background:none; }
+.admin-login-box .btn-cancelar:hover { color:white; background:none; }
 
 @keyframes shake {
     0%,100%  { transform:translateX(0); }
@@ -607,133 +585,7 @@ button:hover{
     animation:shake 0.45s ease;
 }
 
-
-/* ── Bracket desktop ── */
-.bracket-wrapper {
-    display: flex;
-    align-items: stretch;
-    gap: 0;
-    max-width: 640px;
-    overflow: hidden;
-}
-.bracket-semis {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 0;
-    flex: 1;
-}
-.bracket-semi {
-    /* spaced naturally by justify-content */
-}
-.bracket-semis .bracket-semi:first-child {
-    margin-bottom: 32px;
-}
-.bracket-svg-desktop {
-    width: 60px;
-    flex-shrink: 0;
-    position: relative;
-}
-.bracket-final {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex: 1;
-}
-.bracket-arrow-mobile {
-    display: none;
-}
-
-/* ── Partido historial - marcador centrado sin tapar ── */
-.partido-historial .marcador {
-    flex-wrap: nowrap;
-}
-
-@media(max-width:600px){
-
-    /* ── Ocultar columnas secundarias de la tabla ── */
-    .col-pj, .col-eg, .col-ep, .col-gf, .col-gc {
-        display: none;
-    }
-    .col-nombre { display: none; }
-
-    /* ── Partido card compacto ── */
-    .partido .escudo {
-        width: 28px !important;
-        height: 28px !important;
-    }
-    .partido [style*="font-size:18px"] {
-        font-size: 14px !important;
-        padding: 4px 8px !important;
-    }
-    .partido [style*="max-width:80px"] {
-        max-width: none !important;
-        font-size: 11px !important;
-    }
-
-    /* Bracket vertical en mobile */
-    .bracket-wrapper {
-        flex-direction: column;
-        gap: 16px;
-        max-width: 100%;
-        overflow: visible;
-    }
-    .bracket-semis {
-        flex-direction: column;
-        gap: 16px;
-    }
-    .bracket-semis .bracket-semi:first-child {
-        margin-bottom: 0;
-    }
-    .bracket-svg-desktop {
-        display: none;
-    }
-    .bracket-arrow-mobile {
-        display: block;
-        text-align: center;
-        font-size: 13px;
-        font-weight: bold;
-        opacity: 0.5;
-        padding: 4px 0;
-    }
-    .bracket-final {
-        justify-content: flex-start;
-    }
-
-    /* Partido: marcador nunca se envuelve, escudos más pequeños */
-    .partido-historial .marcador {
-        flex-wrap: nowrap;
-        gap: 6px;
-        font-size: 13px;
-    }
-    .partido-historial .marcador img.escudo {
-        width: 28px !important;
-        height: 28px !important;
-    }
-    .partido-historial .marcador > div:nth-child(2),
-    .partido-historial .marcador > div:nth-child(4) {
-        flex: 1;
-        min-width: 0;
-    }
-    .partido-historial .marcador > div:nth-child(2) span,
-    .partido-historial .marcador > div:nth-child(4) span {
-        font-size: 11px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        display: block;
-    }
-}
-
 </style>
-<script>
-// Restaurar tema antes de renderizar (evita flash)
-(function(){
-    if(localStorage.getItem("copaTheme") === "light"){
-        document.documentElement.classList.add("light");
-    }
-})();
-</script>
 </head>
 
 <body>
@@ -753,21 +605,7 @@ button:hover{
 
 <!-- Botón creador en su propia barra, fuera del header -->
 <div id="creadorBar">
-    <button id="modoColorBtn" onclick="toggleModoColor()" title="Cambiar tema" style="
-        font-size:14px;
-        display:flex;
-        align-items:center;
-        gap:7px;
-        background:var(--bg-elevated);
-        color:var(--text);
-        padding:7px 13px;
-        border-radius:20px;
-        font-weight:bold;
-        border:2px solid var(--border);
-        cursor:pointer;
-        box-shadow:0 2px 8px var(--shadow);
-        transition:background 0.3s, color 0.3s, border-color 0.3s;
-    ">🌙 Modo Oscuro</button>
+    <button id="temaToggleBtn" onclick="toggleModoColor()" style="text-decoration:none; font-size:14px; opacity:0.85; color:white; display:flex; align-items:center; gap:7px; background:var(--bg-elevated); border:1px solid var(--border); padding:7px 13px; border-radius:20px; font-weight:bold; box-shadow:0 2px 8px rgba(0,0,0,0.4); transition:opacity 0.2s, background 0.3s, border-color 0.3s; cursor:pointer;">🌙 Modo Oscuro</button>
     <a id="creador" href="https://instagram.com/m4sul" target="_blank">
         Creado por @m4sul
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" style="flex-shrink:0;">
@@ -794,13 +632,13 @@ button:hover{
 <tr>
 <th>#</th>
 <th>Equipo</th>
-<th class="col-pj">PJ</th>
+<th>PJ</th>
 <th>G</th>
-<th class="col-eg">E<sub>g</sub></th>
-<th class="col-ep">E<sub>p</sub></th>
+<th>E<sub>g</sub></th>
+<th>E<sub>p</sub></th>
 <th>P</th>
-<th class="col-gf">GF</th>
-<th class="col-gc">GC</th>
+<th>GF</th>
+<th>GC</th>
 <th>DG</th>
 <th>PTS</th>
 <th>Últ. 3</th>
@@ -813,10 +651,10 @@ button:hover{
 </div>
 
 <div style="margin-top:12px; display:flex; flex-direction:column; gap:6px;">
-    <div onclick="irACopa('oro')" style="display:flex; align-items:center; gap:10px; background:#6b5200; padding:8px 14px; border-radius:8px; font-size:13px; cursor:pointer; transition:filter 0.15s;" onmouseover="this.style.filter='brightness(1.3)'" onmouseout="this.style.filter=''">
+    <div onclick="irACopa('oro')" style="display:flex; align-items:center; gap:10px; background:#6b5200; color:white; padding:8px 14px; border-radius:8px; font-size:13px; cursor:pointer; transition:filter 0.15s;" onmouseover="this.style.filter='brightness(1.3)'" onmouseout="this.style.filter=''">
         <span>🥇</span> <span>Clasifica a la Copa de Oro</span>
     </div>
-    <div onclick="irACopa('plata')" style="display:flex; align-items:center; gap:10px; background:#4b5563; padding:8px 14px; border-radius:8px; font-size:13px; cursor:pointer; transition:filter 0.15s;" onmouseover="this.style.filter='brightness(1.3)'" onmouseout="this.style.filter=''">
+    <div onclick="irACopa('plata')" style="display:flex; align-items:center; gap:10px; background:#4b5563; color:white; padding:8px 14px; border-radius:8px; font-size:13px; cursor:pointer; transition:filter 0.15s;" onmouseover="this.style.filter='brightness(1.3)'" onmouseout="this.style.filter=''">
         <span>🥈</span> <span>Clasifica a la Copa de Plata</span>
     </div>
 </div>
@@ -897,8 +735,8 @@ Guardar Partido
 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
     <h2 style="margin:0;" id="tituloTablaLateral">Goleadores</h2>
     <div style="display:flex; gap:6px;">
-        <button id="tabGoleadoresBtn" onclick="switchTabGoleadores('goleadores')" style="padding:6px 16px; border-radius:20px; font-size:13px; background:#2563eb; color:white; font-weight:bold;">⚽ Goleadores</button>
-        <button id="tabMVPBtn" onclick="switchTabGoleadores('mvp')" style="padding:6px 16px; border-radius:20px; font-size:13px; background:var(--bg-elevated); font-weight:bold; color:var(--text);">🌟 MVPs</button>
+        <button id="tabGoleadoresBtn" onclick="switchTabGoleadores('goleadores')" style="padding:6px 16px; border-radius:20px; font-size:13px; background:#2563eb; font-weight:bold;">⚽ Goleadores</button>
+        <button id="tabMVPBtn" onclick="switchTabGoleadores('mvp')" style="padding:6px 16px; border-radius:20px; font-size:13px; background:#1e293b; font-weight:bold;">🌟 MVPs</button>
     </div>
 </div>
 
@@ -954,7 +792,7 @@ Guardar Partido
     <!-- Tabs -->
     <div style="display:flex; gap:8px; margin-bottom:16px;">
         <button id="tabPartidosBtn" onclick="switchHistorialTab('partidos')" style="background:#2563eb; padding:7px 18px; border-radius:20px; font-size:13px;">Partidos</button>
-        <button id="tabPlantillaBtn" onclick="switchHistorialTab('plantilla')" style="background:var(--bg-elevated); padding:7px 18px; border-radius:20px; font-size:13px; color:var(--text);">Plantilla</button>
+        <button id="tabPlantillaBtn" onclick="switchHistorialTab('plantilla')" style="background:#1e293b; padding:7px 18px; border-radius:20px; font-size:13px;">Plantilla</button>
     </div>
     <div id="historialPartidosEquipo"></div>
     <div id="historialPlantillaEquipo" style="display:none;"></div>
@@ -1204,8 +1042,7 @@ window.subirEscudo = function(event, equipo){
 };
 
 function recalcularTabla(){
-    
-iniciarEquipos();
+    iniciarEquipos();
 
     partidos.forEach(p => {
         const e1 = equipos.find(e => e.nombre === p.equipo1);
@@ -1290,16 +1127,16 @@ function actualizarTabla(){
             <td>
                 <div class="equipo-col">
                     <img src="${escudos[e.nombre] || ESCUDO_DEFAULT}" class="escudo">
-                    <span class="col-nombre">${e.nombre}</span>
+                    <span>${e.nombre}</span>
                 </div>
             </td>
-            <td class="col-pj">${e.PJ}</td>
+            <td>${e.PJ}</td>
             <td>${e.G}</td>
-            <td class="col-eg">${e.Eg}</td>
-            <td class="col-ep">${e.Ep}</td>
+            <td>${e.Eg}</td>
+            <td>${e.Ep}</td>
             <td>${e.P}</td>
-            <td class="col-gf">${e.GF}</td>
-            <td class="col-gc">${e.GC}</td>
+            <td>${e.GF}</td>
+            <td>${e.GC}</td>
             <td>${e.DG > 0 ? "+"+e.DG : e.DG}</td>
             <td><b>${e.PTS}</b></td>
             <td><div style="display:flex;gap:3px;justify-content:center;align-items:center;">${iconosUlt}</div></td>
@@ -1363,13 +1200,13 @@ window.verHistorialEquipo = function(nombre){
                 const label  = `${g.jugador}${g.ownGoal ? " (GEC)" : ""}`;
                 if(g.equipo === p.equipo1){
                     golesIzqH += `
-                    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-deep); border:1px solid var(--border); padding:8px 12px; border-radius:10px; margin-bottom:6px; gap:8px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--score-bg); border:1px solid var(--border); padding:8px 12px; border-radius:10px; margin-bottom:6px; gap:8px;color:var(--text);">
                         <span style="font-weight:600; font-size:13px;">${label}</span>
                         <span style="font-size:14px; letter-spacing:2px;">${emojis}</span>
                     </div>`;
                 } else {
                     golesDerH += `
-                    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-deep); border:1px solid var(--border); padding:8px 12px; border-radius:10px; margin-bottom:6px; gap:8px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--score-bg); border:1px solid var(--border); padding:8px 12px; border-radius:10px; margin-bottom:6px; gap:8px;color:var(--text);">
                         <span style="font-size:14px; letter-spacing:2px;">${emojis}</span>
                         <span style="font-weight:600; font-size:13px;">${label}</span>
                     </div>`;
@@ -1388,13 +1225,12 @@ window.verHistorialEquipo = function(nombre){
             <div class="marcador">
                 <span class="resultado-badge ${badgeClass}">${resultado}</span>
 
-                <div style="display:flex; align-items:center; gap:8px; flex:1; justify-content:space-between;
-    transition:background 0.3s;">
+                <div style="display:flex; align-items:center; gap:8px; flex:1; justify-content:flex-end;">
                     <span style="font-size:13px; text-align:right;">${p.equipo1}</span>
                     <img src="${escudos[p.equipo1] || ESCUDO_DEFAULT}" class="escudo" style="width:36px;height:36px;">
                 </div>
 
-                <div style="background:var(--bg-deep); padding:5px 12px; border-radius:10px; font-size:17px; white-space:nowrap; text-align:center;">
+                <div style="background:var(--score-bg); padding:5px 12px; border-radius:10px; font-size:17px; white-space:nowrap; text-align:center;">
                     ${p.ganadorPenales
                         ? `${p.g1} <span style="font-size:12px;opacity:0.7;">(${p.pen1 ?? '?'})</span> - ${p.g2} <span style="font-size:12px;opacity:0.7;">(${p.pen2 ?? '?'})</span>`
                         : `${p.g1} - ${p.g2}`}
@@ -1402,7 +1238,7 @@ window.verHistorialEquipo = function(nombre){
 
                 <div style="display:flex; align-items:center; gap:8px; flex:1;">
                     <img src="${escudos[p.equipo2] || ESCUDO_DEFAULT}" class="escudo" style="width:36px;height:36px;">
-                    <span style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80px;">${p.equipo2}</span>
+                    <span style="font-size:13px;">${p.equipo2}</span>
                 </div>
 
                 <span style="font-size:11px; opacity:0.5;">Fecha ${p.fecha || 1}</span>
@@ -1433,7 +1269,7 @@ window.toggleGolesHistorial = function(id){
 };
 
 window.cerrarModalHistorial = function(){
-    cerrarModal("modalHistorialEquipo");
+    cerrarModalAnimado("modalHistorialEquipo");
 };
 
 let _equipoHistorialActual = "";
@@ -1445,13 +1281,17 @@ window.switchHistorialTab = function(tab){
     const secPl = document.getElementById("historialPlantillaEquipo");
 
     if(tab === "partidos"){
-        btnP.style.background  = "#2563eb"; btnP.style.color = "white";
-        btnPl.style.background = "var(--bg-elevated)"; btnPl.style.color = "var(--text)";
+        btnP.style.background  = "#2563eb";
+        btnP.style.color       = "white";
+        btnPl.style.background = "var(--bg-elevated)";
+        btnPl.style.color      = "var(--text)";
         secP.style.display  = "block";
         secPl.style.display = "none";
     } else {
-        btnPl.style.background = "#2563eb"; btnPl.style.color = "white";
-        btnP.style.background  = "var(--bg-elevated)"; btnP.style.color = "var(--text)";
+        btnPl.style.background = "#2563eb";
+        btnPl.style.color      = "white";
+        btnP.style.background  = "var(--bg-elevated)";
+        btnP.style.color       = "var(--text)";
         secP.style.display  = "none";
         secPl.style.display = "block";
         renderPlantilla(_equipoHistorialActual);
@@ -1481,8 +1321,7 @@ function renderPlantilla(nombre){
         mvpsJugador[p.mvp.jugador] = (mvpsJugador[p.mvp.jugador] || 0) + 1;
     });
 
-    const isMobile = window.innerWidth <= 600;
-    let html = `<div style="display:grid; grid-template-columns:${isMobile ? "1fr 1fr" : "repeat(auto-fill, minmax(180px, 1fr))"}; gap:8px;">`;
+    let html = `<div style="display:flex; flex-wrap:wrap; gap:10px;">`;
     jugadores.forEach((j, i) => {
         const goles = golesJugador[j] || 0;
         const mvpV  = mvpsJugador[j] || 0;
@@ -1493,7 +1332,7 @@ function renderPlantilla(nombre){
             ? `<span style="font-size:11px; font-weight:bold; color:#fcd34d; display:inline-flex; align-items:center; gap:3px;">🌟 ${mvpV}</span>`
             : "";
         const esMVP = mvpV > 0;
-        const clickAttr = esMVP ? `style="display:flex; align-items:center; gap:10px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:10px 14px; cursor:pointer;" onclick="verPerfilJugador('${j}', '${nombre}')"` : `style="display:flex; align-items:center; gap:10px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:10px 14px;"`;
+        const clickAttr = esMVP ? `style="display:flex; align-items:center; gap:10px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:10px 14px; min-width:180px; cursor:pointer;" onclick="verPerfilJugador('${j}', '${nombre}')"` : `style="display:flex; align-items:center; gap:10px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:10px 14px; min-width:180px;"`;
         html += `
         <div ${clickAttr}>
             <div style="width:32px; height:32px; border-radius:50%; background:#2563eb; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; flex-shrink:0;">${i+1}</div>
@@ -1603,7 +1442,7 @@ function renderBracket(tipo){
 
     let s1, s2, s3, s4;
     if(!listos){
-        const ad = { nombre: "A definir", escudo: null };
+        const ad = { nombre: "Por definir", escudo: null };
         s1 = s2 = s3 = s4 = ad;
     } else {
         if(tipo === 'plata'){
@@ -1618,10 +1457,10 @@ function renderBracket(tipo){
     const titulo = tipo === 'oro' ? '🥇 Copa de Oro' : '🥈 Copa de Plata';
 
     function slot(eq){
-        const nombre = eq.nombre || "A definir";
+        const nombre = eq.nombre || "Por definir";
         const src = (eq.nombre && escudos[eq.nombre]) ? escudos[eq.nombre] : ESCUDO_DEFAULT;
         return `
-        <div style="display:flex;align-items:center;gap:10px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
+        <div style="display:flex;align-items:center;gap:10px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:10px 14px;min-width:180px;color:var(--text);">
             <img src="${src}" style="width:30px;height:30px;border-radius:50%;border:1px solid #fff;object-fit:cover;flex-shrink:0;">
             <span style="font-size:13px;font-weight:600;">${nombre}</span>
         </div>`;
@@ -1629,7 +1468,7 @@ function renderBracket(tipo){
 
     function finalSlot(){
         return `
-        <div style="display:flex;align-items:center;gap:10px;background:var(--bg-deep);border:2px dashed var(--border);border-radius:10px;padding:10px 14px;min-width:180px;opacity:0.5;">
+        <div style="display:flex;align-items:center;gap:10px;background:var(--bg-elevated);border:2px dashed var(--border);border-radius:10px;padding:10px 14px;min-width:180px;opacity:0.6;color:var(--text);">
             <span style="font-size:13px;">🏆 Por definir</span>
         </div>`;
     }
@@ -1642,13 +1481,13 @@ function renderBracket(tipo){
             ${!listos ? '<span style="font-size:12px;font-weight:400;opacity:0.45;margin-left:8px;">Los cruces se revelarán al terminar todas las fechas</span>' : ''}
         </div>
 
-        <div class="bracket-wrapper">
+        <div style="display:flex;align-items:stretch;gap:0;max-width:640px;">
 
             <!-- Columna semifinales -->
-            <div class="bracket-semis">
+            <div style="display:flex;flex-direction:column;justify-content:space-between;gap:0;flex:1;">
 
                 <!-- SF1 -->
-                <div class="bracket-semi">
+                <div id="bracketSF1_${tipo}">
                     <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;opacity:0.45;margin-bottom:6px;">Semifinal 1</div>
                     <div style="display:flex;flex-direction:column;gap:6px;">
                         ${slot(s1)}
@@ -1656,8 +1495,11 @@ function renderBracket(tipo){
                     </div>
                 </div>
 
+                <!-- Espacio entre SF1 y SF2 -->
+                <div style="height:32px;"></div>
+
                 <!-- SF2 -->
-                <div class="bracket-semi">
+                <div id="bracketSF2_${tipo}">
                     <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;opacity:0.45;margin-bottom:6px;">Semifinal 2</div>
                     <div style="display:flex;flex-direction:column;gap:6px;">
                         ${slot(s3)}
@@ -1667,19 +1509,13 @@ function renderBracket(tipo){
 
             </div>
 
-            <!-- Flecha al final en mobile / SVG en desktop -->
-            <div class="bracket-arrow-mobile">↓ Final</div>
-            <div class="bracket-svg-desktop">
-                <svg width="60" height="100%" viewBox="0 0 60 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="width:60px;height:100%;display:block;">
-                    <line x1="0" y1="67" x2="30" y2="67" stroke="#475569" stroke-width="2"/>
-                    <line x1="0" y1="233" x2="30" y2="233" stroke="#475569" stroke-width="2"/>
-                    <line x1="30" y1="67" x2="30" y2="233" stroke="#475569" stroke-width="2"/>
-                    <line x1="30" y1="150" x2="60" y2="150" stroke="#475569" stroke-width="2"/>
-                </svg>
+            <!-- Conectores SVG -->
+            <div id="bracketConnector_${tipo}" style="width:60px;flex-shrink:0;position:relative;align-self:stretch;">
+                <canvas id="bracketCanvas_${tipo}" style="width:60px;height:100%;display:block;"></canvas>
             </div>
 
             <!-- Columna final -->
-            <div class="bracket-final">
+            <div id="bracketFinal_${tipo}" style="display:flex;flex-direction:column;justify-content:center;flex:1;">
                 <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;opacity:0.45;margin-bottom:6px;">Final</div>
                 <div style="display:flex;flex-direction:column;gap:6px;">
                     ${finalSlot()}
@@ -1689,6 +1525,9 @@ function renderBracket(tipo){
 
         </div>
     </div>`;
+
+    // Dibujar conectores dinámicamente una vez que el DOM esté pintado
+    requestAnimationFrame(() => dibujarConectorBracket(tipo));
 }
 
 function actualizarHistorial(){
@@ -1718,15 +1557,14 @@ function actualizarHistorial(){
         const realIndex = p._idx;
         grid.innerHTML += `
         <div class="partido" onclick="verGoles(${realIndex})">
-            <div style="display:flex; align-items:center; justify-content:center; gap:6px; font-size:16px; font-weight:bold; flex-wrap:nowrap; overflow:hidden;">
+            <div style="display:flex; align-items:center; justify-content:center; gap:10px; font-size:16px; font-weight:bold; flex-wrap:wrap;">
 
-                <div style="display:flex; align-items:center; gap:8px; justify-content:space-between;
-    transition:background 0.3s; flex:1; min-width:0;">
-                    <span style="text-align:right; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80px;">${p.equipo1}</span>
+                <div style="display:flex; align-items:center; gap:8px; justify-content:flex-end; flex:1; min-width:0;">
+                    <span style="text-align:right; font-size:13px;">${p.equipo1}</span>
                     <img src="${escudos[p.equipo1] || ESCUDO_DEFAULT}" class="escudo">
                 </div>
 
-                <div style="background:var(--bg-deep); padding:6px 12px; border-radius:10px; white-space:nowrap; font-size:18px;">
+                <div style="background:var(--score-bg); padding:6px 12px; border-radius:10px; white-space:nowrap; font-size:18px;">
                     ${p.ganadorPenales
                         ? `${p.g1} <span style="font-size:13px;opacity:0.7;">(${p.pen1 ?? '?'})</span> - ${p.g2} <span style="font-size:13px;opacity:0.7;">(${p.pen2 ?? '?'})</span>`
                         : `${p.g1} - ${p.g2}`}
@@ -1734,7 +1572,7 @@ function actualizarHistorial(){
 
                 <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
                     <img src="${escudos[p.equipo2] || ESCUDO_DEFAULT}" class="escudo">
-                    <span style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80px;">${p.equipo2}</span>
+                    <span style="font-size:13px;">${p.equipo2}</span>
                 </div>
 
             </div>
@@ -1835,14 +1673,18 @@ window.switchTabGoleadores = function(tab){
     const secM  = document.getElementById("tablaMVP");
     const titulo = document.getElementById("tituloTablaLateral");
     if(tab === "goleadores"){
-        btnG.style.background = "#2563eb"; btnG.style.color = "white";
-        btnM.style.background = "var(--bg-elevated)"; btnM.style.color = "var(--text)";
+        btnG.style.background = "#2563eb";
+        btnG.style.color      = "white";
+        btnM.style.background = "var(--bg-elevated)";
+        btnM.style.color      = "var(--text)";
         secG.style.display = "block";
         secM.style.display = "none";
         if(titulo) titulo.textContent = "Goleadores";
     } else {
-        btnM.style.background = "#f59e0b"; btnM.style.color = "white";
-        btnG.style.background = "var(--bg-elevated)"; btnG.style.color = "var(--text)";
+        btnM.style.background = "#f59e0b";
+        btnM.style.color      = "white";
+        btnG.style.background = "var(--bg-elevated)";
+        btnG.style.color      = "var(--text)";
         secM.style.display = "block";
         secG.style.display = "none";
         if(titulo) titulo.textContent = "MVPs";
@@ -1909,7 +1751,6 @@ function actualizarMVPs(){
 window.verPerfilJugador = function(jugador, equipo){
     const foto = fotos[jugador];
 
-    // Calcular goles y MVPs reales
     let golesTotal = 0;
     partidos.forEach(p => {
         if(!p.goles) return;
@@ -1921,12 +1762,10 @@ window.verPerfilJugador = function(jugador, equipo){
 
     const fotoHTML = foto
         ? `<img src="${foto}" style="width:110px;height:110px;border-radius:50%;border:4px solid #fbbf24;object-fit:cover;box-shadow:0 0 24px rgba(251,191,36,0.4);">`
-        : `<div style="width:110px;height:110px;border-radius:50%;border:4px solid var(--border);background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;font-size:40px;">👤</div>`;
+        : `<div style="width:110px;height:110px;border-radius:50%;border:4px solid #334155;background:#1e293b;display:flex;align-items:center;justify-content:center;font-size:40px;">👤</div>`;
 
     document.getElementById("contenidoPerfilJugador").innerHTML = `
     <div style="background:linear-gradient(160deg,var(--bg-base),var(--bg-elevated));padding:32px 24px 24px;">
-
-        <!-- Header foto + nombre -->
         <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:24px;">
             ${fotoHTML}
             <div style="text-align:center;">
@@ -1937,27 +1776,24 @@ window.verPerfilJugador = function(jugador, equipo){
                 </div>
             </div>
         </div>
-
-        <!-- Stats -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
-            <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;">
+            <div style="background:var(--score-bg);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;">
                 <div style="font-size:28px;font-weight:900;">⚽ ${golesTotal}</div>
                 <div style="font-size:11px;opacity:0.5;margin-top:4px;text-transform:uppercase;letter-spacing:0.08em;">Goles</div>
             </div>
-            <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;">
+            <div style="background:var(--score-bg);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;">
                 <div style="font-size:28px;font-weight:900;color:#fcd34d;">🌟 ${mvpsTotal}</div>
                 <div style="font-size:11px;opacity:0.5;margin-top:4px;text-transform:uppercase;letter-spacing:0.08em;">MVPs</div>
             </div>
         </div>
-
-        <button onclick="cerrarPerfilJugador()" style="width:100%;background:var(--bg-elevated);border:1px solid var(--border);padding:12px;border-radius:12px;font-size:14px;">Cerrar</button>
+        <button onclick="cerrarPerfilJugador()" style="width:100%;background:var(--bg-elevated);border:1px solid var(--border);padding:12px;border-radius:12px;font-size:14px;color:var(--text);">Cerrar</button>
     </div>`;
 
     abrirModal("modalPerfilJugador");
 };
 
 window.cerrarPerfilJugador = function(){
-    cerrarModal("modalPerfilJugador");
+    cerrarModalAnimado("modalPerfilJugador");
 };
 
 // ── Formulario de partido ──────────────────────────────────────────
@@ -2041,7 +1877,7 @@ window.editarPartido = function(index){
     if(p.goles && p.goles.length > 0){
         p.goles.forEach((g, gi) => {
             golesHTML += `
-            <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-deep); padding:8px 12px; border-radius:8px; margin-bottom:8px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; background:#0f172a; padding:8px 12px; border-radius:8px; margin-bottom:8px;">
                 <span>${g.jugador}${g.ownGoal ? " (GEC)" : ""} — ${g.equipo} — ${g.cantidad || 1} ⚽</span>
                 <div style="display:flex; gap:8px;">
                     <button style="padding:5px 10px; font-size:12px; background:#d97706;" onclick="editarGolModal(${index}, ${gi})">✏️</button>
@@ -2059,23 +1895,23 @@ window.editarPartido = function(index){
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
         <div>
             <label style="font-size:12px; opacity:0.7;">Equipo 1</label>
-            <select id="edit_eq1" style="width:100%; padding:10px; margin-top:5px; border:none; border-radius:8px; background:var(--bg-elevated); color:var(--text);" onchange="revisarEmpateModal()">${optsEq}</select>
-            <input id="edit_g1" type="number" value="${p.g1}" style="width:100%; padding:10px; margin-top:8px; border:none; border-radius:8px; background:var(--bg-elevated); color:var(--text);" oninput="revisarEmpateModal()">
+            <select id="edit_eq1" style="width:100%; padding:10px; margin-top:5px; border:none; border-radius:8px; background:#1e293b; color:white;" onchange="revisarEmpateModal()">${optsEq}</select>
+            <input id="edit_g1" type="number" value="${p.g1}" style="width:100%; padding:10px; margin-top:8px; border:none; border-radius:8px; background:#1e293b; color:white;" oninput="revisarEmpateModal()">
         </div>
         <div>
             <label style="font-size:12px; opacity:0.7;">Equipo 2</label>
-            <select id="edit_eq2" style="width:100%; padding:10px; margin-top:5px; border:none; border-radius:8px; background:var(--bg-elevated); color:var(--text);" onchange="revisarEmpateModal()">${optsEq2}</select>
-            <input id="edit_g2" type="number" value="${p.g2}" style="width:100%; padding:10px; margin-top:8px; border:none; border-radius:8px; background:var(--bg-elevated); color:var(--text);" oninput="revisarEmpateModal()">
+            <select id="edit_eq2" style="width:100%; padding:10px; margin-top:5px; border:none; border-radius:8px; background:#1e293b; color:white;" onchange="revisarEmpateModal()">${optsEq2}</select>
+            <input id="edit_g2" type="number" value="${p.g2}" style="width:100%; padding:10px; margin-top:8px; border:none; border-radius:8px; background:#1e293b; color:white;" oninput="revisarEmpateModal()">
         </div>
     </div>
 
-    <div id="edit_penalesDiv" style="display:${esEmpate?"block":"none"}; background:var(--bg-elevated); padding:12px; border-radius:8px; margin-bottom:15px;">
+    <div id="edit_penalesDiv" style="display:${esEmpate?"block":"none"}; background:#1e293b; padding:12px; border-radius:8px; margin-bottom:15px;">
         <p class="small" style="margin:0 0 10px 0;">Empate → ingresa el resultado de penales</p>
         <div style="display:flex; align-items:center; gap:8px;">
             <span id="edit_pen1Label" style="flex:1; font-size:13px; text-align:right; opacity:0.8;">${p.equipo1}</span>
-            <input type="number" id="edit_pen1" value="${p.pen1 ?? ''}" placeholder="0" min="0" max="50" style="width:70px; flex:none; text-align:center; padding:8px; border:none; border-radius:8px; background:var(--bg-deep); color:var(--text);">
+            <input type="number" id="edit_pen1" value="${p.pen1 ?? ''}" placeholder="0" min="0" max="50" style="width:70px; flex:none; text-align:center; padding:8px; border:none; border-radius:8px; background:#0f172a; color:white;">
             <span style="opacity:0.5;">-</span>
-            <input type="number" id="edit_pen2" value="${p.pen2 ?? ''}" placeholder="0" min="0" max="50" style="width:70px; flex:none; text-align:center; padding:8px; border:none; border-radius:8px; background:var(--bg-deep); color:var(--text);">
+            <input type="number" id="edit_pen2" value="${p.pen2 ?? ''}" placeholder="0" min="0" max="50" style="width:70px; flex:none; text-align:center; padding:8px; border:none; border-radius:8px; background:#0f172a; color:white;">
             <span id="edit_pen2Label" style="flex:1; font-size:13px; opacity:0.8;">${p.equipo2}</span>
         </div>
     </div>
@@ -2103,7 +1939,7 @@ window.editarPartido = function(index){
     }).join('');
 
     const mvpSelectHTML = mvpOptsHTML.length
-        ? '<select id="edit_mvp" style="width:100%; padding:10px; border:none; border-radius:8px; background:var(--bg-elevated); color:var(--text);"><option value="">— Sin MVP —</option>'+mvpOptsHTML+'</select>'
+        ? '<select id="edit_mvp" style="width:100%; padding:10px; border:none; border-radius:8px; background:#1e293b; color:white;"><option value="">— Sin MVP —</option>'+mvpOptsHTML+'</select>'
         : '<p class="small" style="opacity:0.5;">No hay jugadores en las plantillas de estos equipos.</p><select id="edit_mvp" style="display:none;"></select>';
 
     document.getElementById("contenidoEditar").innerHTML += `
@@ -2135,19 +1971,19 @@ window.agregarGolModal = async function(index, equipo){
 
     const div = document.createElement("div");
     div.id = divId;
-    div.style.cssText = "background:var(--bg-deep); border:1px solid var(--border); border-radius:10px; padding:14px; margin-top:10px;";
+    div.style.cssText = "background:var(--score-bg); border:1px solid var(--border); border-radius:10px; padding:14px; margin-top:10px;";
     div.innerHTML = `
         <div style="font-size:13px; font-weight:bold; margin-bottom:10px; opacity:0.8;">Añadir gol — ${equipo}</div>
         <div style="display:flex; flex-direction:column; gap:8px;">
-            <select id="addGol_jugador_${divId}" style="padding:9px; border:none; border-radius:8px; background:var(--bg-elevated); color:var(--text); width:100%;">
+            <select id="addGol_jugador_${divId}" style="padding:9px; border:none; border-radius:8px; background:var(--input-bg); color:var(--text); width:100%;">
                 ${optsJug.length ? optsJug : '<option value="">Sin jugadores en plantilla</option>'}
                 <option value="__gec__">⚠️ Autogol (GEC)</option>
             </select>
-            <select id="addGol_gecJugador_${divId}" style="padding:9px; border:none; border-radius:8px; background:var(--bg-elevated); color:var(--text); width:100%; display:none;">
+            <select id="addGol_gecJugador_${divId}" style="padding:9px; border:none; border-radius:8px; background:var(--input-bg); color:var(--text); width:100%; display:none;">
                 <option value="">— Jugador que lo metió —</option>
                 ${optsJugGEC}
             </select>
-            <input id="addGol_cant_${divId}" type="number" value="1" min="1" max="20" placeholder="Cantidad" style="padding:9px; border:none; border-radius:8px; background:var(--bg-elevated); color:var(--text); width:100%;">
+            <input id="addGol_cant_${divId}" type="number" value="1" min="1" max="20" placeholder="Cantidad" style="padding:9px; border:none; border-radius:8px; background:var(--input-bg); color:var(--text); width:100%;">
             <div style="display:flex; gap:8px;">
                 <button onclick="confirmarGolModal(${index}, '${equipo}', '${divId}')" style="flex:1; background:#16a34a; padding:9px;">✅ Confirmar</button>
                 <button onclick="document.getElementById('${divId}').remove()" style="flex:1; background:#6b7280; padding:9px;">Cancelar</button>
@@ -2258,7 +2094,7 @@ window.guardarEdicionCompleta = async function(){
 };
 
 window.cerrarModalEditar = function(){
-    cerrarModal("modalEditar");
+    cerrarModalAnimado("modalEditar");
     editando = -1;
 };
 
@@ -2317,12 +2153,11 @@ window.verGoles = function(index){
     const html = `
     <!-- Cabecera del partido -->
     <div style="display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:24px; padding:16px; background:var(--bg-elevated); border-radius:14px; border:1px solid var(--border);">
-        <div style="display:flex; align-items:center; gap:10px; flex:1; justify-content:space-between;
-    transition:background 0.3s;">
+        <div style="display:flex; align-items:center; gap:10px; flex:1; justify-content:flex-end;">
             <span style="font-size:14px; font-weight:700; text-align:right;">${p.equipo1}</span>
             <img src="${escudos[p.equipo1] || ESCUDO_DEFAULT}" class="escudo" style="width:44px;height:44px;">
         </div>
-        <div style="background:var(--bg-deep); border:2px solid #475569; padding:8px 18px; border-radius:12px; font-size:26px; font-weight:900; letter-spacing:2px; white-space:nowrap; text-align:center;">
+        <div style="background:var(--score-bg); border:2px solid #475569; padding:8px 18px; border-radius:12px; font-size:26px; font-weight:900; letter-spacing:2px; white-space:nowrap; text-align:center;">
             ${p.ganadorPenales
                 ? `${p.g1} <span style="font-size:16px;opacity:0.7;">(${p.pen1 ?? '?'})</span> <span style="opacity:0.4;">-</span> ${p.g2} <span style="font-size:16px;opacity:0.7;">(${p.pen2 ?? '?'})</span>`
                 : `${p.g1} <span style="opacity:0.4;">-</span> ${p.g2}`}
@@ -2355,7 +2190,9 @@ window.verGoles = function(index){
     abrirModal("modalGoles");
 };
 
-
+window.cerrarModal = function(){
+    cerrarModalAnimado("modalGoles");
+};
 
 // ── Visitas ────────────────────────────────────────────────────────
 async function registrarVisita(){
@@ -2391,17 +2228,17 @@ function escucharVisitas(){
             .sort((a,b) => b[0].localeCompare(a[0]))
             .slice(0, 7)
             .map(([f, c]) => `
-            <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg-deep);border-radius:8px;font-size:13px;color:var(--text);">
+            <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg-base);border-radius:8px;font-size:13px;color:var(--text);">
                 <span>${f}</span><span style="font-weight:bold;">${c} visita${c>1?"s":""}</span>
             </div>`).join("");
 
         el.innerHTML = `
         <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
-            <div style="flex:1;min-width:120px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;">
+            <div style="flex:1;min-width:120px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;color:var(--text);">
                 <div style="font-size:32px;font-weight:900;">${total}</div>
                 <div style="font-size:12px;opacity:0.6;margin-top:4px;">Visitas totales</div>
             </div>
-            <div style="flex:1;min-width:120px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;">
+            <div style="flex:1;min-width:120px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;color:var(--text);">
                 <div style="font-size:32px;font-weight:900;">${(porFecha[new Date().toLocaleDateString("es-CL")] || 0)}</div>
                 <div style="font-size:12px;opacity:0.6;margin-top:4px;">Hoy</div>
             </div>
@@ -2485,6 +2322,139 @@ document.getElementById("gol2").addEventListener("input", revisarEmpate);
 document.getElementById("equipo1").addEventListener("change", revisarEmpate);
 document.getElementById("equipo2").addEventListener("change", revisarEmpate);
 
+// ── Animación de modales ───────────────────────────────────────────
+function abrirModal(id){
+    const modal = document.getElementById(id);
+    if(!modal) return;
+    modal.style.display = "block";
+    // forzar reflow para que la transición CSS arranque
+    void modal.offsetWidth;
+    modal.classList.add("abierto");
+}
+
+function cerrarModalAnimado(id){
+    const modal = document.getElementById(id);
+    if(!modal) return;
+    modal.classList.remove("abierto");
+    setTimeout(() => {
+        modal.style.display = "none";
+    }, 280);
+}
+
+// ── Modo claro / oscuro ───────────────────────────────────────────
+window.toggleModoColor = function(){
+    const esClaro = document.body.classList.contains("light");
+    if(esClaro){
+        document.documentElement.classList.remove("light");
+        document.body.classList.remove("light");
+        localStorage.setItem("copaTema", "dark");
+    } else {
+        document.documentElement.classList.add("light");
+        document.body.classList.add("light");
+        localStorage.setItem("copaTema", "light");
+    }
+    actualizarBotonTema();
+    // actualizar colores de tabs
+    actualizarTabsColor();
+};
+
+function actualizarBotonTema(){
+    const btn = document.getElementById("temaToggleBtn");
+    if(!btn) return;
+    const esClaro = document.body.classList.contains("light");
+    btn.textContent = esClaro ? "☀️ Modo Claro" : "🌙 Modo Oscuro";
+    btn.style.color = esClaro ? "#0f172a" : "white";
+}
+
+function actualizarTabsColor(){
+    // Forzar re-render del color de texto en tabs de historial
+    document.querySelectorAll(".fecha-tab").forEach(el => {
+        el.style.color = "var(--text)";
+    });
+    // Tab buttons dentro de modales
+    const tabP = document.getElementById("tabPartidosBtn");
+    const tabPl = document.getElementById("tabPlantillaBtn");
+    const tabG = document.getElementById("tabGoleadoresBtn");
+    const tabM = document.getElementById("tabMVPBtn");
+    [tabP, tabPl, tabG, tabM].forEach(btn => {
+        if(btn && !btn.style.background.includes("2563eb")){
+            btn.style.color = "var(--text)";
+        }
+    });
+}
+
+// Aplicar estado inicial del botón — esperar a que el DOM esté listo
+// ── Bracket connector dinámico ────────────────────────────────────
+function dibujarConectorBracket(tipo){
+    // Doble rAF: primero el DOM se pinta, luego se mide
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        const canvas    = document.getElementById("bracketCanvas_"   + tipo);
+        const connector = document.getElementById("bracketConnector_"+ tipo);
+        const sf1       = document.getElementById("bracketSF1_"      + tipo);
+        const sf2       = document.getElementById("bracketSF2_"      + tipo);
+        const finalCol  = document.getElementById("bracketFinal_"    + tipo);
+        if(!canvas || !connector || !sf1 || !sf2 || !finalCol) return;
+
+        const H = connector.offsetHeight;
+        if(H === 0) return;
+
+        // Ajustar el canvas a píxeles reales (evitar blur por devicePixelRatio)
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width  = 60 * dpr;
+        canvas.height = H  * dpr;
+        canvas.style.width  = "60px";
+        canvas.style.height = H + "px";
+
+        const ctx = canvas.getContext("2d");
+        ctx.scale(dpr, dpr);
+        ctx.clearRect(0, 0, 60, H);
+
+        // Posición del conector respecto a la página
+        const connY = connector.getBoundingClientRect().top + window.scrollY;
+
+        // Centro vertical de SF1 y SF2 (mitad del grupo completo incluyendo label)
+        const sf1Rect = sf1.getBoundingClientRect();
+        const sf2Rect = sf2.getBoundingClientRect();
+        const finRect = finalCol.getBoundingClientRect();
+
+        const ySF1  = (sf1Rect.top  + sf1Rect.bottom)  / 2 - (connector.getBoundingClientRect().top);
+        const ySF2  = (sf2Rect.top  + sf2Rect.bottom)  / 2 - (connector.getBoundingClientRect().top);
+        const yFin  = (finRect.top  + finRect.bottom)   / 2 - (connector.getBoundingClientRect().top);
+        const yMid  = (ySF1 + ySF2) / 2;
+
+        const esClaro = document.body.classList.contains("light");
+        ctx.strokeStyle = esClaro ? "#94a3b8" : "#475569";
+        ctx.lineWidth   = 2;
+        ctx.lineCap     = "round";
+        ctx.lineJoin    = "round";
+
+        ctx.beginPath();
+        // SF1 → punto medio horizontal
+        ctx.moveTo(0, ySF1);
+        ctx.lineTo(30, ySF1);
+        // Vertical SF1 → SF2
+        ctx.lineTo(30, ySF2);
+        // SF2 → punto medio horizontal (cierra el bracket)
+        ctx.lineTo(0, ySF2);
+        ctx.stroke();
+
+        // Línea del centro del bracket hacia la final
+        ctx.beginPath();
+        ctx.moveTo(30, yMid);
+        ctx.lineTo(60, yFin);
+        ctx.stroke();
+    }));
+}
+
+// Redibujar al cambiar tema (el color de la línea cambia)
+const _origToggle = window.toggleModoColor;
+window.toggleModoColor = function(){
+    _origToggle();
+    ["oro","plata"].forEach(t => dibujarConectorBracket(t));
+};
+
+document.addEventListener("DOMContentLoaded", actualizarBotonTema);
+
 iniciarEquipos();
 llenarSelects();
 renderFechasTabs();
@@ -2494,49 +2464,6 @@ escucharTrofeo();
 escucharFotos();
 registrarVisita();
 escucharVisitas();
-
-// ── Animaciones de modales ─────────────────────────────────────────
-function abrirModal(id){
-    const el = document.getElementById(id);
-    el.style.display = "block";
-    void el.offsetWidth;
-    el.classList.add("modal-visible");
-}
-
-function cerrarModal(id){
-    const el = document.getElementById(id);
-    if(!el) return;
-    el.classList.remove("modal-visible");
-    setTimeout(() => { el.style.display = "none"; }, 280);
-}
-
-window.cerrarModal = function(){ cerrarModal("modalGoles"); };
-
-// ── Modo claro / oscuro ────────────────────────────────────────────
-window.toggleModoColor = function(){
-    const isLight = document.body.classList.toggle("light");
-    document.documentElement.classList.toggle("light", isLight);
-    const btn = document.getElementById("modoColorBtn");
-    btn.textContent = isLight ? "☀️ Modo Claro" : "🌙 Modo Oscuro";
-    localStorage.setItem("copaTheme", isLight ? "light" : "dark");
-};
-
-// Sincronizar body con clase ya aplicada en <html> por el script del head
-(function(){
-    const saved = localStorage.getItem("copaTheme");
-    const btn = document.getElementById("modoColorBtn");
-    if(saved === "light"){
-        document.body.classList.add("light");
-        document.documentElement.classList.add("light");
-        if(btn) btn.textContent = "☀️ Modo Claro";
-    } else {
-        document.body.classList.remove("light");
-        document.documentElement.classList.remove("light");
-        if(btn) btn.textContent = "🌙 Modo Oscuro";
-    }
-})();
-
-
 
 </script>
 
