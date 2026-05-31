@@ -651,6 +651,11 @@ button:hover{
 
 @media(max-width:600px){
 
+    /* ── Ocultar columnas secundarias de la tabla ── */
+    .col-pj, .col-eg, .col-ep, .col-gf, .col-gc {
+        display: none;
+    }
+
     /* Bracket vertical en mobile */
     .bracket-wrapper {
         flex-direction: column;
@@ -774,13 +779,13 @@ button:hover{
 <tr>
 <th>#</th>
 <th>Equipo</th>
-<th>PJ</th>
+<th class="col-pj">PJ</th>
 <th>G</th>
-<th>E<sub>g</sub></th>
-<th>E<sub>p</sub></th>
+<th class="col-eg">E<sub>g</sub></th>
+<th class="col-ep">E<sub>p</sub></th>
 <th>P</th>
-<th>GF</th>
-<th>GC</th>
+<th class="col-gf">GF</th>
+<th class="col-gc">GC</th>
 <th>DG</th>
 <th>PTS</th>
 <th>Últ. 3</th>
@@ -1273,13 +1278,13 @@ function actualizarTabla(){
                     <span>${e.nombre}</span>
                 </div>
             </td>
-            <td>${e.PJ}</td>
+            <td class="col-pj">${e.PJ}</td>
             <td>${e.G}</td>
-            <td>${e.Eg}</td>
-            <td>${e.Ep}</td>
+            <td class="col-eg">${e.Eg}</td>
+            <td class="col-ep">${e.Ep}</td>
             <td>${e.P}</td>
-            <td>${e.GF}</td>
-            <td>${e.GC}</td>
+            <td class="col-gf">${e.GF}</td>
+            <td class="col-gc">${e.GC}</td>
             <td>${e.DG > 0 ? "+"+e.DG : e.DG}</td>
             <td><b>${e.PTS}</b></td>
             <td><div style="display:flex;gap:3px;justify-content:center;align-items:center;">${iconosUlt}</div></td>
