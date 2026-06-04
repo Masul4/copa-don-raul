@@ -698,6 +698,15 @@ Empate → ingresa el resultado de penales
 
 </div>
 
+<div style="margin-top:14px; display:flex; align-items:center; gap:10px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:10px 14px;">
+    <input type="checkbox" id="esProgramado" onchange="toggleProgramado()" style="width:auto; margin-top:0; cursor:pointer; accent-color:#2563eb; width:18px; height:18px; flex-shrink:0;">
+    <label for="esProgramado" style="cursor:pointer; font-size:14px; font-weight:bold; margin:0;">📅 Partido programado (sin resultado aún)</label>
+</div>
+
+<div id="fechaProgramadoDiv" style="display:none; margin-top:0;">
+    <input type="date" id="fechaProgramada" placeholder="Fecha del partido" style="margin-top:8px;">
+</div>
+
 <button class="full-btn" onclick="guardarPartido()">
 Guardar Partido
 </button>
@@ -1044,6 +1053,7 @@ function recalcularTabla(){
     iniciarEquipos();
 
     partidos.forEach(p => {
+        if(p.programado) return; // partido aún no jugado, no cuenta en tabla
         const e1 = equipos.find(e => e.nombre === p.equipo1);
         const e2 = equipos.find(e => e.nombre === p.equipo2);
         if(!e1 || !e2) return;
@@ -1088,7 +1098,7 @@ function actualizarTabla(){
 
         // Calcular últimos 3 partidos para este equipo
         const ultimos = partidos
-            .filter(p => p.equipo1 === e.nombre || p.equipo2 === e.nombre)
+            .filter(p => !p.programado && (p.equipo1 === e.nombre || p.equipo2 === e.nombre))
             .slice(-3);
 
         let iconosUlt = "";
@@ -1147,7 +1157,7 @@ function actualizarTabla(){
 window.verHistorialEquipo = function(nombre){
     const partidosEquipo = partidos
         .map((p, i) => ({ ...p, _idx: i }))
-        .filter(p => p.equipo1 === nombre || p.equipo2 === nombre);
+        .filter(p => !p.programado && (p.equipo1 === nombre || p.equipo2 === nombre));
 
     const eq = equipos.find(e => e.nombre === nombre);
 
@@ -1589,6 +1599,45 @@ function actualizarHistorial(){
 
     partidosFecha.forEach((p) => {
         const realIndex = p._idx;
+
+        // ── Partido programado (sin resultado) ──
+        if(p.programado){
+            // Formatear fecha legible
+            let fechaLabel = "";
+            if(p.fechaPartido){
+                const [yyyy, mm, dd] = p.fechaPartido.split("-");
+                const meses = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+                fechaLabel = `${Number(dd)} ${meses[Number(mm)-1]} ${yyyy}`;
+            }
+            grid.innerHTML += `
+            <div class="partido" style="border:2px dashed var(--border); opacity:0.85;" onclick="void(0)">
+                <div style="display:flex; align-items:center; justify-content:center; gap:10px; font-size:16px; font-weight:bold; flex-wrap:wrap;">
+
+                    <div style="display:flex; align-items:center; gap:8px; justify-content:flex-end; flex:1; min-width:0;">
+                        <span style="text-align:right; font-size:13px;">${p.equipo1}</span>
+                        <img src="${escudos[p.equipo1] || ESCUDO_DEFAULT}" class="escudo">
+                    </div>
+
+                    <div style="background:var(--score-bg); padding:6px 12px; border-radius:10px; white-space:nowrap; font-size:14px; text-align:center; min-width:64px;">
+                        <div style="font-size:10px; opacity:0.5; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:2px;">📅 Programado</div>
+                        <div style="font-weight:bold; font-size:13px; color:var(--text-muted);">${fechaLabel || "Fecha por definir"}</div>
+                    </div>
+
+                    <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                        <img src="${escudos[p.equipo2] || ESCUDO_DEFAULT}" class="escudo">
+                        <span style="font-size:13px;">${p.equipo2}</span>
+                    </div>
+
+                </div>
+
+                <div class="acciones admin-only" style="margin-top:8px;">
+                    <button class="deleteBtn" onclick="event.stopPropagation(); eliminarPartido(${realIndex})">🗑</button>
+                </div>
+            </div>`;
+            return;
+        }
+
+        // ── Partido con resultado ──
         grid.innerHTML += `
         <div class="partido" onclick="verGoles(${realIndex})">
             <div style="display:flex; align-items:center; justify-content:center; gap:10px; font-size:16px; font-weight:bold; flex-wrap:wrap;">
@@ -1844,24 +1893,53 @@ window.revisarEmpate = function(){
     }
 };
 
+window.toggleProgramado = function(){
+    const check = document.getElementById("esProgramado");
+    const div   = document.getElementById("fechaProgramadoDiv");
+    const gol1  = document.getElementById("gol1");
+    const gol2  = document.getElementById("gol2");
+    const penDiv= document.getElementById("penalesDiv");
+    div.style.display = check.checked ? "block" : "none";
+    if(check.checked){
+        gol1.disabled = gol2.disabled = true;
+        gol1.style.opacity = gol2.style.opacity = "0.35";
+        penDiv.style.display = "none";
+    } else {
+        gol1.disabled = gol2.disabled = false;
+        gol1.style.opacity = gol2.style.opacity = "1";
+    }
+};
+
 window.guardarPartido = async function(){
     const equipo1 = document.getElementById("equipo1").value;
     const equipo2 = document.getElementById("equipo2").value;
-    const g1 = Number(document.getElementById("gol1").value);
-    const g2 = Number(document.getElementById("gol2").value);
-
-    if(
-        document.getElementById("gol1").value === "" ||
-        document.getElementById("gol2").value === ""
-    ){
-        alert("Ingresa los goles");
-        return;
-    }
 
     if(equipo1 === equipo2){
         alert("No puedes elegir el mismo equipo");
         return;
     }
+
+    const esProgramado = document.getElementById("esProgramado").checked;
+
+    if(esProgramado){
+        const fechaProg = document.getElementById("fechaProgramada").value;
+        if(!fechaProg){ alert("Ingresa la fecha del partido"); return; }
+        const fecha = Number(document.getElementById("fechaPartido")?.value || 1);
+        const partido = { equipo1, equipo2, g1: null, g2: null, ganadorPenales: "", pen1: null, pen2: null, goles:[], fecha, programado: true, fechaPartido: fechaProg };
+        if(editando === -1){
+            partidos.push(partido);
+        } else {
+            partidos[editando] = partido;
+            editando = -1;
+        }
+        limpiarFormulario();
+        await guardarDatos();
+        recalcularTabla();
+        return;
+    }
+
+    const g1 = Number(document.getElementById("gol1").value);
+    const g2 = Number(document.getElementById("gol2").value);
 
     let ganadorPenales = "";
     let pen1 = null, pen2 = null;
@@ -2204,6 +2282,16 @@ function limpiarFormulario(){
     document.getElementById("pen1").value = "";
     document.getElementById("pen2").value = "";
     document.getElementById("penalesDiv").style.display = "none";
+    const chk = document.getElementById("esProgramado");
+    if(chk){ chk.checked = false; }
+    const fpDiv = document.getElementById("fechaProgramadoDiv");
+    if(fpDiv){ fpDiv.style.display = "none"; }
+    const fpInput = document.getElementById("fechaProgramada");
+    if(fpInput){ fpInput.value = ""; }
+    const g1el = document.getElementById("gol1");
+    const g2el = document.getElementById("gol2");
+    if(g1el){ g1el.disabled = false; g1el.style.opacity = "1"; }
+    if(g2el){ g2el.disabled = false; g2el.style.opacity = "1"; }
     editando = -1;
 }
 
