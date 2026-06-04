@@ -1222,8 +1222,11 @@ window.verHistorialEquipo = function(nombre){
         let golesIzqH = "";
         let golesDerH = "";
         if(p.goles && p.goles.length > 0){
-            p.goles.forEach(g => {
-                if(g.jugador.toUpperCase() === "GEC") return;
+            const golesOrdenadosH = [...p.goles]
+                .filter(g => g.jugador.toUpperCase() !== "GEC")
+                .sort((a, b) => (b.cantidad || 1) - (a.cantidad || 1));
+
+            golesOrdenadosH.forEach(g => {
                 const emojis = "⚽ ".repeat(g.cantidad || 1).trim();
                 const label  = `${g.jugador}${g.ownGoal ? " (GEC)" : ""}`;
                 if(g.equipo === p.equipo1){
@@ -1374,8 +1377,19 @@ function renderPlantilla(nombre){
         });
     });
 
+    // Ordenar jugadores por goles desc, luego MVPs desc, luego nombre asc
+    const jugadoresOrdenados = jugadores
+        .map((j, i) => ({ j, i }))
+        .sort((a, b) => {
+            const gDiff = (golesJugador[b.j] || 0) - (golesJugador[a.j] || 0);
+            if(gDiff !== 0) return gDiff;
+            const mDiff = (mvpsJugador[b.j] || 0) - (mvpsJugador[a.j] || 0);
+            if(mDiff !== 0) return mDiff;
+            return a.j.localeCompare(b.j);
+        });
+
     let html = `<div style="display:flex; flex-wrap:wrap; gap:10px;">`;
-    jugadores.forEach((j, i) => {
+    jugadoresOrdenados.forEach(({ j, i }) => {
         const goles = golesJugador[j] || 0;
         const mvpV  = mvpsJugador[j] || 0;
         const amarillas = amarillasJugador[j] || 0;
@@ -2443,8 +2457,11 @@ function buildGolesColumnas(p){
     let golesDer = "";
 
     if(p.goles && p.goles.length > 0){
-        p.goles.forEach(g => {
-            if(g.jugador.toUpperCase() === "GEC") return;
+        const golesOrdenados = [...p.goles]
+            .filter(g => g.jugador.toUpperCase() !== "GEC")
+            .sort((a, b) => (b.cantidad || 1) - (a.cantidad || 1));
+
+        golesOrdenados.forEach(g => {
             const emojis = "⚽ ".repeat(g.cantidad || 1).trim();
             const label  = `${g.jugador}${g.ownGoal ? " (GEC)" : ""}`;
             if(g.equipo === p.equipo1){
