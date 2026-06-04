@@ -128,7 +128,7 @@ th{
 }
 
 .gold{
-    background:#6b5200;
+    background:#c8960c;
 }
 
 .tabla-wrapper{
@@ -170,8 +170,7 @@ th{
 }
 
 .silver{
-    background:#999b9b;
-    color:#0f172a;
+    background:#909090;
 }
 
 .equipo-col{
@@ -651,10 +650,10 @@ button:hover{
 </div>
 
 <div style="margin-top:12px; display:flex; flex-direction:column; gap:6px;">
-    <div onclick="irACopa('oro')" style="display:flex; align-items:center; gap:10px; background:#6b5200; color:white; padding:8px 14px; border-radius:8px; font-size:13px; cursor:pointer; transition:filter 0.15s;" onmouseover="this.style.filter='brightness(1.3)'" onmouseout="this.style.filter=''">
+    <div onclick="irACopa('oro')" style="display:flex; align-items:center; gap:10px; background:#c8960c; color:white; padding:8px 14px; border-radius:8px; font-size:13px; cursor:pointer; transition:filter 0.15s;" onmouseover="this.style.filter='brightness(1.3)'" onmouseout="this.style.filter=''">
         <span>🥇</span> <span>Clasifica a la Copa de Oro</span>
     </div>
-    <div onclick="irACopa('plata')" style="display:flex; align-items:center; gap:10px; background:#4b5563; color:white; padding:8px 14px; border-radius:8px; font-size:13px; cursor:pointer; transition:filter 0.15s;" onmouseover="this.style.filter='brightness(1.3)'" onmouseout="this.style.filter=''">
+    <div onclick="irACopa('plata')" style="display:flex; align-items:center; gap:10px; background:#909090; color:white; padding:8px 14px; border-radius:8px; font-size:13px; cursor:pointer; transition:filter 0.15s;" onmouseover="this.style.filter='brightness(1.3)'" onmouseout="this.style.filter=''">
         <span>🥈</span> <span>Clasifica a la Copa de Plata</span>
     </div>
 </div>
@@ -1220,6 +1219,15 @@ window.verHistorialEquipo = function(nombre){
             ? `<div style="text-align:center; margin-top:8px;"><span style="font-size:11px; background:#78350f; color:#fcd34d; padding:4px 12px; border-radius:20px; font-weight:bold;">🌟 MVP: ${p.mvp.jugador} <span style="opacity:0.7;">(${p.mvp.equipo})</span></span></div>`
             : "";
 
+        const tarjetasTag = (p.tarjetas && p.tarjetas.length > 0)
+            ? `<div style="display:flex; flex-wrap:wrap; gap:4px; justify-content:center; margin-top:6px;">
+                ${p.tarjetas.map(t => {
+                    const emoji = t.tipo === "roja" ? "🟥" : "🟨";
+                    return `<span style="font-size:11px; background:var(--bg-elevated); border:1px solid var(--border); padding:3px 10px; border-radius:20px;">${emoji} ${t.jugador} <span style="opacity:0.6;">(${t.equipo})</span></span>`;
+                }).join("")}
+               </div>`
+            : "";
+
         contenedor.innerHTML += `
         <div class="partido-historial" onclick="toggleGolesHistorial('${divId}')">
             <div class="marcador">
@@ -1245,6 +1253,7 @@ window.verHistorialEquipo = function(nombre){
             </div>
 
             ${mvpTag}
+            ${tarjetasTag}
             <div class="goles-detalle" id="${divId}">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:4px;">
                     <div>
@@ -1321,16 +1330,41 @@ function renderPlantilla(nombre){
         mvpsJugador[p.mvp.jugador] = (mvpsJugador[p.mvp.jugador] || 0) + 1;
     });
 
+    // Calcular tarjetas por jugador del equipo
+    const amarillasJugador = {};
+    const rojasJugador = {};
+    partidos.forEach(p => {
+        if(!p.tarjetas) return;
+        p.tarjetas.forEach(t => {
+            if(t.equipo !== nombre) return;
+            if(t.tipo === "roja"){
+                rojasJugador[t.jugador] = (rojasJugador[t.jugador] || 0) + 1;
+            } else {
+                amarillasJugador[t.jugador] = (amarillasJugador[t.jugador] || 0) + 1;
+            }
+        });
+    });
+
     let html = `<div style="display:flex; flex-wrap:wrap; gap:10px;">`;
     jugadores.forEach((j, i) => {
         const goles = golesJugador[j] || 0;
         const mvpV  = mvpsJugador[j] || 0;
+        const amarillas = amarillasJugador[j] || 0;
+        const rojas = rojasJugador[j] || 0;
+
         const golesTag = goles > 0
             ? `<span style="font-size:11px; opacity:0.75; display:inline-flex; align-items:center; gap:3px; margin-right:8px;">⚽ ${goles}</span>`
             : "";
         const mvpTag = mvpV > 0
-            ? `<span style="font-size:11px; font-weight:bold; color:#fcd34d; display:inline-flex; align-items:center; gap:3px;">🌟 ${mvpV}</span>`
+            ? `<span style="font-size:11px; font-weight:bold; color:#fcd34d; display:inline-flex; align-items:center; gap:3px; margin-right:8px;">🌟 ${mvpV}</span>`
             : "";
+        const amarillasTag = amarillas > 0
+            ? `<span style="font-size:11px; display:inline-flex; align-items:center; gap:3px; margin-right:4px;">🟨 ${amarillas}</span>`
+            : "";
+        const rojasTag = rojas > 0
+            ? `<span style="font-size:11px; display:inline-flex; align-items:center; gap:3px;">🟥 ${rojas}</span>`
+            : "";
+
         const esMVP = mvpV > 0;
         const clickAttr = esMVP ? `style="display:flex; align-items:center; gap:10px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:10px 14px; min-width:180px; cursor:pointer;" onclick="verPerfilJugador('${j}', '${nombre}')"` : `style="display:flex; align-items:center; gap:10px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:10px 14px; min-width:180px;"`;
         html += `
@@ -1338,7 +1372,7 @@ function renderPlantilla(nombre){
             <div style="width:32px; height:32px; border-radius:50%; background:#2563eb; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; flex-shrink:0;">${i+1}</div>
             <div style="display:flex; flex-direction:column; gap:2px;">
                 <span style="font-size:14px; font-weight:600; line-height:1.2;">${j}</span>
-                <div style="display:flex; align-items:center; flex-wrap:wrap;">${golesTag}${mvpTag}</div>
+                <div style="display:flex; align-items:center; flex-wrap:wrap;">${golesTag}${mvpTag}${amarillasTag}${rojasTag}</div>
             </div>
             ${admin ? `<div style="display:flex; gap:4px; margin-left:auto;" onclick="event.stopPropagation()">
                 <button onclick="editarJugador('${nombre}', ${i})" style="padding:4px 8px; font-size:11px; background:#d97706;">✏️</button>
@@ -1942,6 +1976,46 @@ window.editarPartido = function(index){
         ? '<select id="edit_mvp" style="width:100%; padding:10px; border:none; border-radius:8px; background:#1e293b; color:white;"><option value="">— Sin MVP —</option>'+mvpOptsHTML+'</select>'
         : '<p class="small" style="opacity:0.5;">No hay jugadores en las plantillas de estos equipos.</p><select id="edit_mvp" style="display:none;"></select>';
 
+    // Tarjetas del partido
+    const todosJugTarjeta = [
+        ...(plantillas[p.equipo1]||[]).map(j=>({j, eq:p.equipo1})),
+        ...(plantillas[p.equipo2]||[]).map(j=>({j, eq:p.equipo2}))
+    ];
+    const optsJugTarjeta = todosJugTarjeta.map(({j,eq})=>`<option value="${j}|||${eq}">${j} (${eq})</option>`).join('');
+
+    let tarjetasHTML = "";
+    if(p.tarjetas && p.tarjetas.length > 0){
+        p.tarjetas.forEach((t, ti) => {
+            const emoji = t.tipo === "roja" ? "🟥" : "🟨";
+            tarjetasHTML += `
+            <div style="display:flex; align-items:center; justify-content:space-between; background:#0f172a; padding:8px 12px; border-radius:8px; margin-bottom:8px;">
+                <span>${emoji} ${t.jugador} — ${t.equipo}</span>
+                <button style="padding:5px 10px; font-size:12px; background:#dc2626;" onclick="borrarTarjetaModal(${index}, ${ti})">🗑</button>
+            </div>`;
+        });
+    } else {
+        tarjetasHTML = "<p class='small' style='margin-bottom:10px; opacity:0.5;'>Sin tarjetas registradas.</p>";
+    }
+
+    document.getElementById("contenidoEditar").innerHTML += `
+    <hr style="margin:20px 0; opacity:0.3;">
+    <h4 style="margin-bottom:12px;">🟨 Tarjetas del partido</h4>
+    <div id="edit_listaTarjetas">${tarjetasHTML}</div>
+    <div style="background:var(--score-bg); border:1px solid var(--border); border-radius:10px; padding:14px; margin-top:10px;">
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            <select id="edit_tarjeta_jugador" style="padding:9px; border:none; border-radius:8px; background:var(--input-bg); color:var(--text);">
+                <option value="">— Selecciona jugador —</option>
+                ${optsJugTarjeta}
+            </select>
+            <select id="edit_tarjeta_tipo" style="padding:9px; border:none; border-radius:8px; background:var(--input-bg); color:var(--text);">
+                <option value="amarilla">🟨 Amarilla</option>
+                <option value="roja">🟥 Roja</option>
+            </select>
+            <button onclick="agregarTarjetaModal(${index})" style="background:#d97706; padding:9px; border-radius:8px;">+ Añadir tarjeta</button>
+        </div>
+    </div>
+    `;
+
     document.getElementById("contenidoEditar").innerHTML += `
     <hr style="margin:20px 0; opacity:0.3;">
     <h4 style="margin-bottom:12px;">🌟 MVP del partido</h4>
@@ -2093,6 +2167,24 @@ window.guardarEdicionCompleta = async function(){
     cerrarModalEditar();
 };
 
+window.agregarTarjetaModal = async function(index){
+    const sel = document.getElementById("edit_tarjeta_jugador");
+    const tipo = document.getElementById("edit_tarjeta_tipo").value;
+    if(!sel || !sel.value){ alert("Selecciona un jugador"); return; }
+    const [jugador, equipo] = sel.value.split("|||");
+    if(!partidos[index].tarjetas) partidos[index].tarjetas = [];
+    partidos[index].tarjetas.push({ jugador, equipo, tipo });
+    await guardarDatos();
+    editarPartido(index);
+};
+
+window.borrarTarjetaModal = async function(partidoIdx, tarjetaIdx){
+    if(!confirm("¿Eliminar esta tarjeta?")) return;
+    partidos[partidoIdx].tarjetas.splice(tarjetaIdx, 1);
+    await guardarDatos();
+    editarPartido(partidoIdx);
+};
+
 window.cerrarModalEditar = function(){
     cerrarModalAnimado("modalEditar");
     editando = -1;
@@ -2172,6 +2264,15 @@ window.verGoles = function(index){
     ${p.mvp && p.mvp.jugador ? `
     <div style="text-align:center; margin-bottom:16px;">
         <span style="font-size:12px; background:#78350f; color:#fcd34d; padding:5px 14px; border-radius:20px; font-weight:bold;">🌟 MVP: ${p.mvp.jugador} <span style="opacity:0.7; font-size:11px;">(${p.mvp.equipo})</span></span>
+    </div>` : ""}
+
+    <!-- Tarjetas del partido -->
+    ${p.tarjetas && p.tarjetas.length > 0 ? `
+    <div style="text-align:center; margin-bottom:16px; display:flex; flex-wrap:wrap; gap:6px; justify-content:center;">
+        ${p.tarjetas.map(t => {
+            const emoji = t.tipo === "roja" ? "🟥" : "🟨";
+            return `<span style="font-size:12px; background:var(--bg-elevated); border:1px solid var(--border); padding:4px 12px; border-radius:20px;">${emoji} ${t.jugador} <span style="opacity:0.6; font-size:11px;">(${t.equipo})</span></span>`;
+        }).join("")}
     </div>` : ""}
 
     <!-- Columnas de goles -->
