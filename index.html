@@ -222,18 +222,19 @@ button:hover{
 
 .partido{
     background: var(--partido-bg);
-    padding:12px;
-    border-radius:12px;
-    margin-bottom:12px;
-    width:fit-content;
-    min-width:430px;
-    cursor:pointer;
-    transition:background 0.2s, transform 0.2s;
+    padding: 0;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: transform 0.18s, box-shadow 0.18s;
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    position: relative;
 }
 
 .partido:hover{
-    background: var(--partido-hover);
-    transform:scale(1.02);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
 }
 
 .small{
@@ -243,17 +244,29 @@ button:hover{
 
 .acciones{
     display:flex;
-    gap:10px;
-    margin-top:10px;
+    gap:8px;
+    padding: 8px 14px 12px;
 }
 
 .deleteBtn{
-    background:#dc2626;
+    background: rgba(220,38,38,0.15);
+    color: #f87171;
+    border: 1px solid rgba(220,38,38,0.3);
+    font-size: 13px;
+    padding: 5px 12px;
+    border-radius: 8px;
 }
+.deleteBtn:hover{ background: rgba(220,38,38,0.3); }
 
 .editBtn{
-    background:#d97706;
+    background: rgba(217,119,6,0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(217,119,6,0.3);
+    font-size: 13px;
+    padding: 5px 12px;
+    border-radius: 8px;
 }
+.editBtn:hover{ background: rgba(217,119,6,0.3); }
 
 #modoContainer{
     padding:10px;
@@ -418,6 +431,7 @@ button:hover{
 }
 
 /* ── Modal historial equipo ── */
+/* ── Historial de equipo ── */
 .partido-historial {
     background: var(--bg-elevated);
     border-radius:12px;
@@ -700,12 +714,17 @@ Empate → ingresa el resultado de penales
 
 <div style="margin-top:14px; display:flex; align-items:center; gap:10px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:10px 14px;">
     <input type="checkbox" id="esProgramado" onchange="toggleProgramado()" style="width:auto; margin-top:0; cursor:pointer; accent-color:#2563eb; width:18px; height:18px; flex-shrink:0;">
-    <label for="esProgramado" style="cursor:pointer; font-size:14px; font-weight:bold; margin:0;">📅 Partido programado (sin resultado aún)</label>
+    <label for="esProgramado" style="cursor:pointer; font-size:14px; font-weight:bold; margin:0;">📅 Partido programado</label>
 </div>
 
 <div id="fechaProgramadoDiv" style="display:none; margin-top:0;">
-    <input type="date" id="fechaProgramada" placeholder="Fecha del partido" style="margin-top:8px;">
+    <div style="display:flex; gap:8px; margin-top:8px;">
+        <input type="date" id="fechaProgramada" style="flex:1; margin-top:0;">
+        <input type="time" id="horaProgramada" style="width:120px; margin-top:0;">
+    </div>
 </div>
+
+<div id="cargarNotice" style="display:none; background:rgba(37,99,235,0.15); border:1px solid rgba(37,99,235,0.4); color:#93c5fd; border-radius:10px; padding:10px 14px; font-size:13px; font-weight:600; margin-top:10px;"></div>
 
 <button class="full-btn" onclick="guardarPartido()">
 Guardar Partido
@@ -1602,67 +1621,107 @@ function actualizarHistorial(){
 
         // ── Partido programado (sin resultado) ──
         if(p.programado){
-            // Formatear fecha legible
-            let fechaLabel = "";
+            const dias  = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+            let centroTop = "Por definirse";
+            let centroBot = "";
             if(p.fechaPartido){
                 const [yyyy, mm, dd] = p.fechaPartido.split("-");
-                const meses = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
-                fechaLabel = `${Number(dd)} ${meses[Number(mm)-1]} ${yyyy}`;
+                const dateObj = new Date(Number(yyyy), Number(mm)-1, Number(dd));
+                const hoy    = new Date(); hoy.setHours(0,0,0,0);
+                const manana = new Date(hoy); manana.setDate(hoy.getDate()+1);
+                if(dateObj.getTime() === hoy.getTime())        centroTop = "Hoy";
+                else if(dateObj.getTime() === manana.getTime()) centroTop = "Mañana";
+                else centroTop = `${dias[dateObj.getDay()]} ${Number(dd)}/${Number(mm)}`;
+                centroBot = p.horaPartido || "";
+            } else if(p.horaPartido){
+                centroBot = p.horaPartido;
             }
+
             grid.innerHTML += `
-            <div class="partido" style="border:2px dashed var(--border); opacity:0.85;" onclick="void(0)">
-                <div style="display:flex; align-items:center; justify-content:center; gap:10px; font-size:16px; font-weight:bold; flex-wrap:wrap;">
+            <div class="partido" data-real-index="${realIndex}" style="border:1px dashed var(--border); opacity:0.88; cursor:default;" onclick="void(0)">
 
-                    <div style="display:flex; align-items:center; gap:8px; justify-content:flex-end; flex:1; min-width:0;">
-                        <span style="text-align:right; font-size:13px;">${p.equipo1}</span>
+                <!-- Banda punteada azul -->
+                <div style="height:4px; background:repeating-linear-gradient(90deg,#3b82f6 0,#3b82f6 8px,transparent 8px,transparent 14px); border-radius:16px 16px 0 0; opacity:0.5;"></div>
+
+                <!-- Mismo layout que partido normal: equipo1 | centro | equipo2 -->
+                <div style="display:flex; align-items:center; padding:14px 12px 10px;">
+
+                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;">
                         <img src="${escudos[p.equipo1] || ESCUDO_DEFAULT}" class="escudo">
+                        <span style="font-size:12px; font-weight:600;">${p.equipo1}</span>
                     </div>
 
-                    <div style="background:var(--score-bg); padding:6px 12px; border-radius:10px; white-space:nowrap; font-size:14px; text-align:center; min-width:64px;">
-                        <div style="font-size:10px; opacity:0.5; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:2px;">📅 Programado</div>
-                        <div style="font-weight:bold; font-size:13px; color:var(--text-muted);">${fechaLabel || "Fecha por definir"}</div>
+                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 10px; gap:2px; min-width:80px;">
+                        <div style="font-size:15px; font-weight:800; color:var(--text-muted); letter-spacing:1px;">${centroTop}</div>
+                        ${centroBot ? `<div style="font-size:18px; font-weight:900; color:#60a5fa;">${centroBot}</div>` : ""}
                     </div>
 
-                    <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;">
                         <img src="${escudos[p.equipo2] || ESCUDO_DEFAULT}" class="escudo">
-                        <span style="font-size:13px;">${p.equipo2}</span>
+                        <span style="font-size:12px; font-weight:600;">${p.equipo2}</span>
                     </div>
 
                 </div>
 
-                <div class="acciones admin-only" style="margin-top:8px;">
-                    <button class="deleteBtn" onclick="event.stopPropagation(); eliminarPartido(${realIndex})">🗑</button>
+                <div class="acciones admin-only">
+                    <button class="editBtn" onclick="event.stopPropagation(); cargarResultadoProgramado(${realIndex})" style="background:rgba(37,99,235,0.2);color:#93c5fd;border:1px solid rgba(37,99,235,0.4);">📋 Cargar resultado</button>
+                    <button class="deleteBtn" onclick="event.stopPropagation(); eliminarPartido(${realIndex})">🗑 Eliminar</button>
                 </div>
             </div>`;
             return;
         }
 
         // ── Partido con resultado ──
+        const win1 = p.g1 > p.g2 || p.ganadorPenales === p.equipo1;
+        const win2 = p.g2 > p.g1 || p.ganadorPenales === p.equipo2;
+        const fueAPenales = !!p.ganadorPenales;
+
+        const scoreHTML = p.ganadorPenales
+            ? `${p.g1}<span style="font-size:11px;opacity:0.6;margin:0 1px;">(${p.pen1 ?? '?'})</span>
+               <span style="opacity:0.4; font-size:18px;">-</span>
+               <span style="font-size:11px;opacity:0.6;margin:0 1px;">(${p.pen2 ?? '?'})</span>${p.g2}`
+            : `${p.g1} <span style="opacity:0.4;">-</span> ${p.g2}`;
+
         grid.innerHTML += `
-        <div class="partido" onclick="verGoles(${realIndex})">
-            <div style="display:flex; align-items:center; justify-content:center; gap:10px; font-size:16px; font-weight:bold; flex-wrap:wrap;">
+        <div class="partido" data-real-index="${realIndex}" onclick="verGoles(${realIndex})">
 
-                <div style="display:flex; align-items:center; gap:8px; justify-content:flex-end; flex:1; min-width:0;">
-                    <span style="text-align:right; font-size:13px;">${p.equipo1}</span>
-                    <img src="${escudos[p.equipo1] || ESCUDO_DEFAULT}" class="escudo">
+            <!-- Header banda de color sutil -->
+            <div style="height:4px; background: linear-gradient(90deg, ${win1 ? '#16a34a' : 'var(--border-light)'} 50%, ${win2 ? '#16a34a' : 'var(--border-light)'} 50%); border-radius:16px 16px 0 0;"></div>
+
+            <!-- Cuerpo principal -->
+            <div style="display:flex; align-items:stretch; padding: 14px 12px 10px;">
+
+                <!-- Equipo 1 -->
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;">
+                    <div style="position:relative; display:inline-block;">
+                        <img src="${escudos[p.equipo1] || ESCUDO_DEFAULT}" class="escudo" style="${win1 ? 'border-color:#16a34a; box-shadow:0 0 12px rgba(22,163,74,0.5);' : 'opacity:' + (win2 ? '0.55' : '1') + ';'}">
+
+                    </div>
+                    <span style="font-size:12px; font-weight:${win1 ? '700' : '500'}; opacity:${win2 ? '0.6' : '1'}; line-height:1.2;">${p.equipo1}</span>
                 </div>
 
-                <div style="background:var(--score-bg); padding:6px 12px; border-radius:10px; white-space:nowrap; font-size:18px;">
-                    ${p.ganadorPenales
-                        ? `${p.g1} <span style="font-size:13px;opacity:0.7;">(${p.pen1 ?? '?'})</span> - ${p.g2} <span style="font-size:13px;opacity:0.7;">(${p.pen2 ?? '?'})</span>`
-                        : `${p.g1} - ${p.g2}`}
+                <!-- Marcador central -->
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 0 10px; gap:4px; min-width:80px;">
+                    <div style="font-size:26px; font-weight:900; letter-spacing:2px; line-height:1; color:var(--text);">${scoreHTML}</div>
+                    ${p.ganadorPenales ? '<div style="font-size:9px; opacity:0.5; letter-spacing:0.08em; text-transform:uppercase; margin-top:2px;">Penales</div>' : ''}
+                    <div style="font-size:9px; opacity:0.35; letter-spacing:0.06em; text-transform:uppercase; margin-top:4px;">FT</div>
                 </div>
 
-                <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
-                    <img src="${escudos[p.equipo2] || ESCUDO_DEFAULT}" class="escudo">
-                    <span style="font-size:13px;">${p.equipo2}</span>
+                <!-- Equipo 2 -->
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;">
+                    <div style="position:relative; display:inline-block;">
+                        <img src="${escudos[p.equipo2] || ESCUDO_DEFAULT}" class="escudo" style="${win2 ? 'border-color:#16a34a; box-shadow:0 0 12px rgba(22,163,74,0.5);' : 'opacity:' + (win1 ? '0.55' : '1') + ';'}">
+
+                    </div>
+                    <span style="font-size:12px; font-weight:${win2 ? '700' : '500'}; opacity:${win1 ? '0.6' : '1'}; line-height:1.2;">${p.equipo2}</span>
                 </div>
 
             </div>
 
-            <div class="acciones admin-only" style="margin-top:8px;">
-                <button class="editBtn"   onclick="event.stopPropagation(); editarPartido(${realIndex})">Editar</button>
-                <button class="deleteBtn" onclick="event.stopPropagation(); eliminarPartido(${realIndex})">🗑</button>
+            <!-- Acciones admin -->
+            <div class="acciones admin-only">
+                <button class="editBtn"   onclick="event.stopPropagation(); editarPartido(${realIndex})">✏️ Editar</button>
+                <button class="deleteBtn" onclick="event.stopPropagation(); eliminarPartido(${realIndex})">🗑 Eliminar</button>
             </div>
         </div>`;
     });
@@ -1674,6 +1733,7 @@ function actualizarHistorial(){
     }
 }
 
+// ── Reordenamiento por click-swap ──────────────────────────────────
 // ── Goleadores ─────────────────────────────────────────────────────
 function buildJugadorInfo(nombre, equipo){
     const foto = fotos[nombre];
@@ -1923,9 +1983,9 @@ window.guardarPartido = async function(){
 
     if(esProgramado){
         const fechaProg = document.getElementById("fechaProgramada").value;
-        if(!fechaProg){ alert("Ingresa la fecha del partido"); return; }
         const fecha = Number(document.getElementById("fechaPartido")?.value || 1);
-        const partido = { equipo1, equipo2, g1: null, g2: null, ganadorPenales: "", pen1: null, pen2: null, goles:[], fecha, programado: true, fechaPartido: fechaProg };
+        const horaProg = document.getElementById("horaProgramada").value;
+        const partido = { equipo1, equipo2, g1: null, g2: null, ganadorPenales: "", pen1: null, pen2: null, goles:[], fecha, programado: true, fechaPartido: fechaProg, horaPartido: horaProg };
         if(editando === -1){
             partidos.push(partido);
         } else {
@@ -2002,7 +2062,10 @@ window.editarPartido = function(index){
     }
 
     document.getElementById("contenidoEditar").innerHTML = `
-    <h3 style="margin-bottom:15px;">${p.equipo1} ${p.g1} - ${p.g2} ${p.equipo2}</h3>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:15px; flex-wrap:wrap; gap:8px;">
+        <h3 style="margin:0;">${p.equipo1} ${p.g1} - ${p.g2} ${p.equipo2}</h3>
+        <button onclick="invertirLocalVisitante()" style="background:rgba(99,102,241,0.2); color:#a5b4fc; border:1px solid rgba(99,102,241,0.4); font-size:12px; padding:6px 12px; border-radius:8px; font-weight:600;">⇄ Invertir local / visitante</button>
+    </div>
 
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
         <div>
@@ -2104,11 +2167,89 @@ window.editarPartido = function(index){
     abrirModal("modalEditar");
 };
 
+window.cargarResultadoProgramado = function(index){
+    const p = partidos[index];
+    // Pre-fill the main form with the teams, clear goals, and scroll to form
+    document.getElementById("equipo1").value = p.equipo1;
+    document.getElementById("equipo2").value = p.equipo2;
+    document.getElementById("gol1").value = "";
+    document.getElementById("gol2").value = "";
+    document.getElementById("penalesDiv").style.display = "none";
+    // Uncheck programado
+    const chk = document.getElementById("esProgramado");
+    if(chk){ chk.checked = false; }
+    const fpDiv = document.getElementById("fechaProgramadoDiv");
+    if(fpDiv){ fpDiv.style.display = "none"; }
+    const g1el = document.getElementById("gol1");
+    const g2el = document.getElementById("gol2");
+    if(g1el){ g1el.disabled = false; g1el.style.opacity = "1"; }
+    if(g2el){ g2el.disabled = false; g2el.style.opacity = "1"; }
+    // Set editando so guardarPartido overwrites this slot
+    editando = index;
+    // Scroll to form
+    const formEl = document.getElementById("equipo1");
+    if(formEl) formEl.closest("div")?.scrollIntoView({ behavior:"smooth", block:"center" });
+    // Visual feedback
+    const form = document.querySelector(".admin-panel") || document.getElementById("equipo1")?.closest("section, .card, div[style]");
+    if(formEl) formEl.focus();
+    // Show a small notice
+    const notice = document.getElementById("cargarNotice");
+    if(notice){
+        notice.textContent = `📋 Cargando resultado para: ${p.equipo1} vs ${p.equipo2}`;
+        notice.style.display = "block";
+        setTimeout(() => notice.style.display = "none", 4000);
+    }
+};
+
 window.revisarEmpateModal = function(){
     const g1 = document.getElementById("edit_g1").value;
     const g2 = document.getElementById("edit_g2").value;
     const div = document.getElementById("edit_penalesDiv");
     if(div) div.style.display = (g1 !== "" && g2 !== "" && Number(g1) === Number(g2)) ? "block" : "none";
+};
+
+window.invertirLocalVisitante = function(){
+    const eq1 = document.getElementById("edit_eq1");
+    const eq2 = document.getElementById("edit_eq2");
+    const g1  = document.getElementById("edit_g1");
+    const g2  = document.getElementById("edit_g2");
+    if(!eq1 || !eq2 || !g1 || !g2) return;
+
+    // Swap teams
+    const tmpEq = eq1.value;
+    eq1.value = eq2.value;
+    eq2.value = tmpEq;
+
+    // Swap goals
+    const tmpG = g1.value;
+    g1.value = g2.value;
+    g2.value = tmpG;
+
+    // Swap penalty labels and values if visible
+    const pen1 = document.getElementById("edit_pen1");
+    const pen2 = document.getElementById("edit_pen2");
+    const pen1Label = document.getElementById("edit_pen1Label");
+    const pen2Label = document.getElementById("edit_pen2Label");
+    if(pen1 && pen2){
+        const tmpPen = pen1.value;
+        pen1.value = pen2.value;
+        pen2.value = tmpPen;
+    }
+    if(pen1Label && pen2Label){
+        const tmpLabel = pen1Label.textContent;
+        pen1Label.textContent = pen2Label.textContent;
+        pen2Label.textContent = tmpLabel;
+    }
+
+    // Update the goles buttons labels
+    const btns = document.querySelectorAll("#contenidoEditar button");
+    btns.forEach(btn => {
+        if(btn.textContent.startsWith("+ Gol")) {
+            // rebuild them via re-render is complex; just update text
+        }
+    });
+
+    revisarEmpateModal();
 };
 
 window.agregarGolModal = async function(index, equipo){
@@ -2288,6 +2429,8 @@ function limpiarFormulario(){
     if(fpDiv){ fpDiv.style.display = "none"; }
     const fpInput = document.getElementById("fechaProgramada");
     if(fpInput){ fpInput.value = ""; }
+    const horaInput = document.getElementById("horaProgramada");
+    if(horaInput){ horaInput.value = ""; }
     const g1el = document.getElementById("gol1");
     const g2el = document.getElementById("gol2");
     if(g1el){ g1el.disabled = false; g1el.style.opacity = "1"; }
