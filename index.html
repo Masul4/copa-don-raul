@@ -1184,20 +1184,16 @@ window.verHistorialEquipo = function(nombre){
             golesOrdenH.forEach(g => {
                 const emojis = "⚽ ".repeat(g.cantidad || 1).trim();
                 if(g.ownGoal){
-                    // Autogol: aparece en la columna del equipo rival (quien se beneficia)
-                    const equipoRival = g.equipo === p.equipo1 ? "equipo2" : "equipo1";
-                    const label = `GEC`;
-                    if(equipoRival === "equipo1"){
-                        golesIzqH += `
-                        <div style="display:flex; align-items:center; justify-content:space-between; background:var(--score-bg); border:1px solid rgba(220,38,38,0.35); padding:8px 12px; border-radius:10px; margin-bottom:6px; gap:8px; color:var(--text);">
-                            <span style="font-weight:600; font-size:13px;">${label}</span>
+                    // GEC: mostrar en la columna del equipo en que fue registrado (quien se beneficia)
+                    if(g.equipo === p.equipo1){
+                        golesIzqH += `<div style="display:flex; align-items:center; justify-content:space-between; background:var(--score-bg); border:1px solid rgba(220,38,38,0.35); padding:8px 12px; border-radius:10px; margin-bottom:6px; gap:8px; color:var(--text);">
+                            <span style="font-weight:600; font-size:13px;">GEC</span>
                             <span style="font-size:14px; letter-spacing:2px;">${emojis}</span>
                         </div>`;
                     } else {
-                        golesDerH += `
-                        <div style="display:flex; align-items:center; justify-content:space-between; background:var(--score-bg); border:1px solid rgba(220,38,38,0.35); padding:8px 12px; border-radius:10px; margin-bottom:6px; gap:8px; color:var(--text);">
+                        golesDerH += `<div style="display:flex; align-items:center; justify-content:space-between; background:var(--score-bg); border:1px solid rgba(220,38,38,0.35); padding:8px 12px; border-radius:10px; margin-bottom:6px; gap:8px; color:var(--text);">
                             <span style="font-size:14px; letter-spacing:2px;">${emojis}</span>
-                            <span style="font-weight:600; font-size:13px;">${label}</span>
+                            <span style="font-weight:600; font-size:13px;">GEC</span>
                         </div>`;
                     }
                 } else {
@@ -2415,20 +2411,16 @@ function buildGolesColumnas(p){
         golesOrdenados.forEach(g => {
             const emojis = "⚽ ".repeat(g.cantidad || 1).trim();
             if(g.ownGoal){
-                // Autogol: aparece en la columna del equipo rival (quien se beneficia)
-                const equipoRival = g.equipo === p.equipo1 ? "equipo2" : "equipo1";
-                const label = `GEC`;
-                if(equipoRival === "equipo1"){
-                    golesIzq += `
-                    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-elevated); border:1px solid rgba(220,38,38,0.35); padding:10px 14px; border-radius:10px; margin-bottom:8px; gap:10px;">
-                        <span style="font-weight:600; font-size:14px;">${label}</span>
+                // GEC: mostrar en la columna del equipo en que fue registrado (quien se beneficia)
+                if(g.equipo === p.equipo1){
+                    golesIzq += `<div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-elevated); border:1px solid rgba(220,38,38,0.35); padding:10px 14px; border-radius:10px; margin-bottom:8px; gap:10px;">
+                        <span style="font-weight:600; font-size:14px;">GEC</span>
                         <span style="font-size:16px; letter-spacing:2px;">${emojis}</span>
                     </div>`;
                 } else {
-                    golesDer += `
-                    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-elevated); border:1px solid rgba(220,38,38,0.35); padding:10px 14px; border-radius:10px; margin-bottom:8px; gap:10px; text-align:right;">
+                    golesDer += `<div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-elevated); border:1px solid rgba(220,38,38,0.35); padding:10px 14px; border-radius:10px; margin-bottom:8px; gap:10px; text-align:right;">
                         <span style="font-size:16px; letter-spacing:2px;">${emojis}</span>
-                        <span style="font-weight:600; font-size:14px;">${label}</span>
+                        <span style="font-weight:600; font-size:14px;">GEC</span>
                     </div>`;
                 }
             } else {
