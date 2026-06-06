@@ -943,6 +943,15 @@ function escucharCambios(){
         }
         // ── Reordenar Fecha 1 al orden correcto ──
         // (eliminado, ahora se usa drag & drop)
+        // Fix: eliminar duplicado Aston Birra 9-0 Wackstone fecha 3
+        const idxDup = partidos.findIndex(p =>
+            p.equipo1 === "Aston Birra" && p.equipo2 === "Wackstone" && p.fecha === 3
+        );
+        if(idxDup !== -1){
+            partidos.splice(idxDup, 1);
+            await guardarDatos();
+        }
+
         // Fix: invertir Aston Birra/Wackstone si está al revés
         const idxAW = partidos.findIndex(p =>
             p.equipo1 === "Aston Birra" && p.equipo2 === "Wackstone" && p.fecha === 3
