@@ -845,13 +845,27 @@ function setSyncStatus(estado){
 async function guardarDatos(){
     setSyncStatus("loading");
     try {
-        await setDoc(refPartidos,   { lista: partidos,    adminToken: ADMIN_TOKEN });
-        await setDoc(refEscudos,    { mapa: escudos,      adminToken: ADMIN_TOKEN });
-        await setDoc(refPlantillas, { mapa: plantillas,   adminToken: ADMIN_TOKEN });
+        await setDoc(refPartidos, { lista: partidos, adminToken: ADMIN_TOKEN });
         setSyncStatus("ok");
     } catch(e){
-        console.error(e);
+        console.error("Error guardando partidos:", e);
         setSyncStatus("error");
+    }
+}
+
+async function guardarEscudos(){
+    try {
+        await setDoc(refEscudos, { mapa: escudos, adminToken: ADMIN_TOKEN });
+    } catch(e){
+        console.error("Error guardando escudos:", e);
+    }
+}
+
+async function guardarPlantillas(){
+    try {
+        await setDoc(refPlantillas, { mapa: plantillas, adminToken: ADMIN_TOKEN });
+    } catch(e){
+        console.error("Error guardando plantillas:", e);
     }
 }
 
@@ -916,53 +930,12 @@ window.subirFotoJugador = function(event, jugador){
 };
 
 function escucharCambios(){
-    onSnapshot(refPartidos, async (snap) => {
+    onSnapshot(refPartidos, (snap) => {
         if(snap.exists()){
             partidos = snap.data().lista || [];
         } else {
             partidos = [];
         }
-
-        // ── Partido de emergencia: Aston Birra 9-0 Wackstone Fecha 3 ──
-        const yaExiste = partidos.some(p =>
-            (p.equipo1 === "Aston Birra" || p.equipo2 === "Aston Birra") &&
-            (p.equipo1 === "Wackstone"   || p.equipo2 === "Wackstone")   &&
-            p.fecha === 3
-        );
-        if(!yaExiste){
-            partidos.push({
-                equipo1: "Wackstone",
-                equipo2: "Aston Birra",
-                g1: 0, g2: 9,
-                ganadorPenales: "", pen1: null, pen2: null,
-                goles: [], tarjetas: [],
-                fecha: 3,
-                programado: false
-            });
-            await guardarDatos();
-        }
-        // ── Reordenar Fecha 1 al orden correcto ──
-        // (eliminado, ahora se usa drag & drop)
-        // Fix: eliminar duplicado Aston Birra 9-0 Wackstone fecha 3
-        const idxDup = partidos.findIndex(p =>
-            p.equipo1 === "Aston Birra" && p.equipo2 === "Wackstone" && p.fecha === 3
-        );
-        if(idxDup !== -1){
-            partidos.splice(idxDup, 1);
-            await guardarDatos();
-        }
-
-        // Fix: invertir Aston Birra/Wackstone si está al revés
-        const idxAW = partidos.findIndex(p =>
-            p.equipo1 === "Aston Birra" && p.equipo2 === "Wackstone" && p.fecha === 3
-        );
-        if(idxAW !== -1){
-            const p = partidos[idxAW];
-            partidos[idxAW] = { ...p, equipo1: "Wackstone", equipo2: "Aston Birra", g1: p.g2, g2: p.g1 };
-            await guardarDatos();
-        }
-        // ─────────────────────────────────────────────────────────────
-
         recalcularTabla();
         setSyncStatus("ok");
     }, () => setSyncStatus("error"));
@@ -1039,7 +1012,7 @@ window.subirEscudo = function(event, equipo){
 
         escudos[equipo] = compressed;
 
-        guardarDatos();
+        guardarEscudos();
         actualizarTabla();
         actualizarHistorial();
         actualizarGoleadores();
@@ -1206,23 +1179,41 @@ window.verHistorialEquipo = function(nombre){
         let golesDerH = "";
         if(p.goles && p.goles.length > 0){
             const golesOrdenH = [...p.goles]
-                .filter(g => g.jugador.toUpperCase() !== "GEC")
                 .sort((a,b) => (b.cantidad||1) - (a.cantidad||1));
             golesOrdenH.forEach(g => {
                 const emojis = "⚽ ".repeat(g.cantidad || 1).trim();
-                const label  = `${g.jugador}${g.ownGoal ? " (GEC)" : ""}`;
-                if(g.equipo === p.equipo1){
-                    golesIzqH += `
-                    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--score-bg); border:1px solid var(--border); padding:8px 12px; border-radius:10px; margin-bottom:6px; gap:8px;color:var(--text);">
-                        <span style="font-weight:600; font-size:13px;">${label}</span>
-                        <span style="font-size:14px; letter-spacing:2px;">${emojis}</span>
-                    </div>`;
+                if(g.ownGoal){
+                    // Autogol: aparece en la columna del equipo rival (quien se beneficia)
+                    const equipoRival = g.equipo === p.equipo1 ? "equipo1" : "equipo2";
+                    const label = `🔴 GEC <span style="font-size:11px; opacity:0.6;">(${g.equipo})</span>`;
+                    if(equipoRival === "equipo1"){
+                        golesIzqH += `
+                        <div style="display:flex; align-items:center; justify-content:space-between; background:var(--score-bg); border:1px solid rgba(220,38,38,0.35); padding:8px 12px; border-radius:10px; margin-bottom:6px; gap:8px; color:var(--text);">
+                            <span style="font-weight:600; font-size:13px;">${label}</span>
+                            <span style="font-size:14px; letter-spacing:2px;">${emojis}</span>
+                        </div>`;
+                    } else {
+                        golesDerH += `
+                        <div style="display:flex; align-items:center; justify-content:space-between; background:var(--score-bg); border:1px solid rgba(220,38,38,0.35); padding:8px 12px; border-radius:10px; margin-bottom:6px; gap:8px; color:var(--text);">
+                            <span style="font-size:14px; letter-spacing:2px;">${emojis}</span>
+                            <span style="font-weight:600; font-size:13px;">${label}</span>
+                        </div>`;
+                    }
                 } else {
-                    golesDerH += `
-                    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--score-bg); border:1px solid var(--border); padding:8px 12px; border-radius:10px; margin-bottom:6px; gap:8px;color:var(--text);">
-                        <span style="font-size:14px; letter-spacing:2px;">${emojis}</span>
-                        <span style="font-weight:600; font-size:13px;">${label}</span>
-                    </div>`;
+                    const label = g.jugador;
+                    if(g.equipo === p.equipo1){
+                        golesIzqH += `
+                        <div style="display:flex; align-items:center; justify-content:space-between; background:var(--score-bg); border:1px solid var(--border); padding:8px 12px; border-radius:10px; margin-bottom:6px; gap:8px;color:var(--text);">
+                            <span style="font-weight:600; font-size:13px;">${label}</span>
+                            <span style="font-size:14px; letter-spacing:2px;">${emojis}</span>
+                        </div>`;
+                    } else {
+                        golesDerH += `
+                        <div style="display:flex; align-items:center; justify-content:space-between; background:var(--score-bg); border:1px solid var(--border); padding:8px 12px; border-radius:10px; margin-bottom:6px; gap:8px;color:var(--text);">
+                            <span style="font-size:14px; letter-spacing:2px;">${emojis}</span>
+                            <span style="font-weight:600; font-size:13px;">${label}</span>
+                        </div>`;
+                    }
                 }
             });
         }
@@ -1418,7 +1409,7 @@ window.agregarJugador = async function(equipo){
     if(!plantillas[equipo]) plantillas[equipo] = [];
     plantillas[equipo].push(nombre);
     input.value = "";
-    await guardarDatos();
+    await guardarPlantillas();
     renderPlantilla(equipo);
 };
 
@@ -1427,14 +1418,14 @@ window.editarJugador = async function(equipo, idx){
     const nuevo = prompt("Nombre del jugador:", actual);
     if(!nuevo || !nuevo.trim()) return;
     plantillas[equipo][idx] = nuevo.trim();
-    await guardarDatos();
+    await guardarPlantillas();
     renderPlantilla(equipo);
 };
 
 window.borrarJugador = async function(equipo, idx){
     if(!confirm("¿Eliminar jugador?")) return;
     plantillas[equipo].splice(idx, 1);
-    await guardarDatos();
+    await guardarPlantillas();
     renderPlantilla(equipo);
 };
 
@@ -2418,24 +2409,42 @@ function buildGolesColumnas(p){
 
     if(p.goles && p.goles.length > 0){
         const golesOrdenados = [...p.goles]
-            .filter(g => g.jugador.toUpperCase() !== "GEC")
             .sort((a,b) => (b.cantidad||1) - (a.cantidad||1));
 
         golesOrdenados.forEach(g => {
             const emojis = "⚽ ".repeat(g.cantidad || 1).trim();
-            const label  = `${g.jugador}${g.ownGoal ? " (GEC)" : ""}`;
-            if(g.equipo === p.equipo1){
-                golesIzq += `
-                <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-elevated); border:1px solid var(--border); padding:10px 14px; border-radius:10px; margin-bottom:8px; gap:10px;">
-                    <span style="font-weight:600; font-size:14px;">${label}</span>
-                    <span style="font-size:16px; letter-spacing:2px;">${emojis}</span>
-                </div>`;
+            if(g.ownGoal){
+                // Autogol: aparece en la columna del equipo rival (quien se beneficia)
+                const equipoRival = g.equipo === p.equipo1 ? "equipo2" : "equipo1";
+                const label = `🔴 GEC <span style="font-size:11px; opacity:0.6;">(${g.equipo})</span>`;
+                if(equipoRival === "equipo1"){
+                    golesIzq += `
+                    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-elevated); border:1px solid rgba(220,38,38,0.35); padding:10px 14px; border-radius:10px; margin-bottom:8px; gap:10px;">
+                        <span style="font-weight:600; font-size:14px;">${label}</span>
+                        <span style="font-size:16px; letter-spacing:2px;">${emojis}</span>
+                    </div>`;
+                } else {
+                    golesDer += `
+                    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-elevated); border:1px solid rgba(220,38,38,0.35); padding:10px 14px; border-radius:10px; margin-bottom:8px; gap:10px; text-align:right;">
+                        <span style="font-size:16px; letter-spacing:2px;">${emojis}</span>
+                        <span style="font-weight:600; font-size:14px;">${label}</span>
+                    </div>`;
+                }
             } else {
-                golesDer += `
-                <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-elevated); border:1px solid var(--border); padding:10px 14px; border-radius:10px; margin-bottom:8px; gap:10px; text-align:right;">
-                    <span style="font-size:16px; letter-spacing:2px;">${emojis}</span>
-                    <span style="font-weight:600; font-size:14px;">${label}</span>
-                </div>`;
+                const label = g.jugador;
+                if(g.equipo === p.equipo1){
+                    golesIzq += `
+                    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-elevated); border:1px solid var(--border); padding:10px 14px; border-radius:10px; margin-bottom:8px; gap:10px;">
+                        <span style="font-weight:600; font-size:14px;">${label}</span>
+                        <span style="font-size:16px; letter-spacing:2px;">${emojis}</span>
+                    </div>`;
+                } else {
+                    golesDer += `
+                    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-elevated); border:1px solid var(--border); padding:10px 14px; border-radius:10px; margin-bottom:8px; gap:10px; text-align:right;">
+                        <span style="font-size:16px; letter-spacing:2px;">${emojis}</span>
+                        <span style="font-weight:600; font-size:14px;">${label}</span>
+                    </div>`;
+                }
             }
         });
     }
