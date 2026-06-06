@@ -1185,8 +1185,8 @@ window.verHistorialEquipo = function(nombre){
                 const emojis = "⚽ ".repeat(g.cantidad || 1).trim();
                 if(g.ownGoal){
                     // Autogol: aparece en la columna del equipo rival (quien se beneficia)
-                    const equipoRival = g.equipo === p.equipo1 ? "equipo1" : "equipo2";
-                    const label = `🔴 GEC <span style="font-size:11px; opacity:0.6;">(${g.equipo})</span>`;
+                    const equipoRival = g.equipo === p.equipo1 ? "equipo2" : "equipo1";
+                    const label = `GEC`;
                     if(equipoRival === "equipo1"){
                         golesIzqH += `
                         <div style="display:flex; align-items:center; justify-content:space-between; background:var(--score-bg); border:1px solid rgba(220,38,38,0.35); padding:8px 12px; border-radius:10px; margin-bottom:6px; gap:8px; color:var(--text);">
@@ -2417,7 +2417,7 @@ function buildGolesColumnas(p){
             if(g.ownGoal){
                 // Autogol: aparece en la columna del equipo rival (quien se beneficia)
                 const equipoRival = g.equipo === p.equipo1 ? "equipo2" : "equipo1";
-                const label = `🔴 GEC <span style="font-size:11px; opacity:0.6;">(${g.equipo})</span>`;
+                const label = `GEC`;
                 if(equipoRival === "equipo1"){
                     golesIzq += `
                     <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-elevated); border:1px solid rgba(220,38,38,0.35); padding:10px 14px; border-radius:10px; margin-bottom:8px; gap:10px;">
