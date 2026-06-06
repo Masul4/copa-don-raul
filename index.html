@@ -925,18 +925,31 @@ function escucharCambios(){
 
         // ── Partido de emergencia: Aston Birra 9-0 Wackstone Fecha 3 ──
         const yaExiste = partidos.some(p =>
-            p.equipo1 === "Aston Birra" && p.equipo2 === "Wackstone" && p.fecha === 3
+            (p.equipo1 === "Aston Birra" || p.equipo2 === "Aston Birra") &&
+            (p.equipo1 === "Wackstone"   || p.equipo2 === "Wackstone")   &&
+            p.fecha === 3
         );
         if(!yaExiste){
             partidos.push({
-                equipo1: "Aston Birra",
-                equipo2: "Wackstone",
-                g1: 9, g2: 0,
+                equipo1: "Wackstone",
+                equipo2: "Aston Birra",
+                g1: 0, g2: 9,
                 ganadorPenales: "", pen1: null, pen2: null,
                 goles: [], tarjetas: [],
                 fecha: 3,
                 programado: false
             });
+            await guardarDatos();
+        }
+        // ── Reordenar Fecha 1 al orden correcto ──
+        // (eliminado, ahora se usa drag & drop)
+        // Fix: invertir Aston Birra/Wackstone si está al revés
+        const idxAW = partidos.findIndex(p =>
+            p.equipo1 === "Aston Birra" && p.equipo2 === "Wackstone" && p.fecha === 3
+        );
+        if(idxAW !== -1){
+            const p = partidos[idxAW];
+            partidos[idxAW] = { ...p, equipo1: "Wackstone", equipo2: "Aston Birra", g1: p.g2, g2: p.g1 };
             await guardarDatos();
         }
         // ─────────────────────────────────────────────────────────────
@@ -1578,6 +1591,7 @@ function actualizarHistorial(){
 
     historial.innerHTML = '<div class="partidos-grid" id="partidosGrid"></div>';
     const grid = document.getElementById("partidosGrid");
+    let dragSrcIdx = null;
 
     partidosFecha.forEach((p) => {
         const realIndex = p._idx;
@@ -1605,7 +1619,13 @@ function actualizarHistorial(){
 
             grid.innerHTML += `
             <div class="partido" data-real-index="${realIndex}" style="border:1px dashed var(--border); opacity:0.88; cursor:${cursorProg};"
-                onclick="${onclickProg}">
+                onclick="${onclickProg}"
+                draggable="${admin}"
+                ondragstart="window._dragSrc=${realIndex}; this.style.opacity='0.4';"
+                ondragend="this.style.opacity='0.88';"
+                ondragover="event.preventDefault(); this.style.outline='2px dashed #60a5fa';"
+                ondragleave="this.style.outline='';"
+                ondrop="event.stopPropagation(); this.style.outline=''; window.reordenarPartido(${realIndex});">
 
                 <!-- Banda punteada azul -->
                 <div style="height:4px; background:repeating-linear-gradient(90deg,#3b82f6 0,#3b82f6 8px,transparent 8px,transparent 14px); border-radius:16px 16px 0 0; opacity:0.5;"></div>
@@ -1649,7 +1669,13 @@ function actualizarHistorial(){
             : `${p.g1} <span style="opacity:0.4;">-</span> ${p.g2}`;
 
         grid.innerHTML += `
-        <div class="partido" data-real-index="${realIndex}" onclick="verGoles(${realIndex})">
+        <div class="partido" data-real-index="${realIndex}" onclick="verGoles(${realIndex})"
+            draggable="${admin}"
+            ondragstart="window._dragSrc=${realIndex}; this.style.opacity='0.4';"
+            ondragend="this.style.opacity='';"
+            ondragover="event.preventDefault(); this.style.outline='2px dashed #60a5fa';"
+            ondragleave="this.style.outline='';"
+            ondrop="event.stopPropagation(); this.style.outline=''; window.reordenarPartido(${realIndex});">
 
             <!-- Header banda de color sutil -->
             <div style="height:4px; background: linear-gradient(90deg, ${win1 ? '#16a34a' : 'var(--border-light)'} 50%, ${win2 ? '#16a34a' : 'var(--border-light)'} 50%); border-radius:16px 16px 0 0;"></div>
@@ -2162,10 +2188,8 @@ window.invertirLocalVisitante = function(){
 };
 
 window.agregarGolModal = async function(index, equipo){
-    // Construir modal inline con select de plantilla
     const jugPlantilla = (plantillas[equipo] || []);
     const optsJug = jugPlantilla.map(j => `<option value="${j}">${j}</option>`).join("");
-    const optsJugGEC = jugPlantilla.map(j => `<option value="${j}">${j}</option>`).join("");
 
     const divId = "addGolInline_" + index + "_" + equipo.replace(/[^a-z0-9]/gi,"");
     const existente = document.getElementById(divId);
@@ -2181,24 +2205,14 @@ window.agregarGolModal = async function(index, equipo){
                 ${optsJug.length ? optsJug : '<option value="">Sin jugadores en plantilla</option>'}
                 <option value="__gec__">⚠️ Autogol (GEC)</option>
             </select>
-            <select id="addGol_gecJugador_${divId}" style="padding:9px; border:none; border-radius:8px; background:var(--input-bg); color:var(--text); width:100%; display:none;">
-                <option value="">— Jugador que lo metió —</option>
-                ${optsJugGEC}
-            </select>
-            <input id="addGol_cant_${divId}" type="number" value="1" min="1" max="20" placeholder="Cantidad" style="padding:9px; border:none; border-radius:8px; background:var(--input-bg); color:var(--text); width:100%;">
+            <input id="addGol_cant_${divId}" type="number" value="1" min="1" max="20" placeholder="Cantidad"
+                style="padding:9px; border:none; border-radius:8px; background:var(--input-bg); color:var(--text); width:100%;">
             <div style="display:flex; gap:8px;">
                 <button onclick="confirmarGolModal(${index}, '${equipo}', '${divId}')" style="flex:1; background:#16a34a; padding:9px;">✅ Confirmar</button>
                 <button onclick="document.getElementById('${divId}').remove()" style="flex:1; background:#6b7280; padding:9px;">Cancelar</button>
             </div>
         </div>`;
 
-    // Mostrar/ocultar select GEC según selección
-    div.querySelector(`#addGol_jugador_${divId}`).addEventListener("change", function(){
-        const gecSel = div.querySelector(`#addGol_gecJugador_${divId}`);
-        gecSel.style.display = this.value === "__gec__" ? "block" : "none";
-    });
-
-    // Insertar debajo de la lista de goles del equipo correspondiente
     const eqKey = equipo.replace(/[^a-z0-9]/gi,"");
     const listaGoles = document.getElementById(`edit_goles_${eqKey}`);
     if(listaGoles){
@@ -2210,7 +2224,6 @@ window.agregarGolModal = async function(index, equipo){
 
 window.confirmarGolModal = async function(index, equipo, divId){
     const sel = document.getElementById(`addGol_jugador_${divId}`);
-    const gecSel = document.getElementById(`addGol_gecJugador_${divId}`);
     const cantInput = document.getElementById(`addGol_cant_${divId}`);
     if(!sel) return;
 
@@ -2223,7 +2236,7 @@ window.confirmarGolModal = async function(index, equipo, divId){
     let jugador, ownGoal = false;
     if(selVal === "__gec__"){
         ownGoal = true;
-        jugador = gecSel.value || "GEC";
+        jugador = "GEC";
     } else {
         jugador = selVal;
     }
@@ -2360,6 +2373,17 @@ window.borrarTarjetaModal = async function(partidoIdx, tarjetaIdx){
     partidos[partidoIdx].tarjetas.splice(tarjetaIdx, 1);
     await guardarDatos();
     editarPartido(partidoIdx);
+};
+
+window.reordenarPartido = async function(targetIdx){
+    const srcIdx = window._dragSrc;
+    if(srcIdx === undefined || srcIdx === targetIdx) return;
+    const copia = [...partidos];
+    const [movido] = copia.splice(srcIdx, 1);
+    copia.splice(targetIdx, 0, movido);
+    partidos = copia;
+    await guardarDatos();
+    actualizarHistorial();
 };
 
 window.cerrarModalEditar = function(){
