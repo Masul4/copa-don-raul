@@ -916,12 +916,31 @@ window.subirFotoJugador = function(event, jugador){
 };
 
 function escucharCambios(){
-    onSnapshot(refPartidos, (snap) => {
+    onSnapshot(refPartidos, async (snap) => {
         if(snap.exists()){
             partidos = snap.data().lista || [];
         } else {
             partidos = [];
         }
+
+        // ── Partido de emergencia: Aston Birra 9-0 Wackstone Fecha 3 ──
+        const yaExiste = partidos.some(p =>
+            p.equipo1 === "Aston Birra" && p.equipo2 === "Wackstone" && p.fecha === 3
+        );
+        if(!yaExiste){
+            partidos.push({
+                equipo1: "Aston Birra",
+                equipo2: "Wackstone",
+                g1: 9, g2: 0,
+                ganadorPenales: "", pen1: null, pen2: null,
+                goles: [], tarjetas: [],
+                fecha: 3,
+                programado: false
+            });
+            await guardarDatos();
+        }
+        // ─────────────────────────────────────────────────────────────
+
         recalcularTabla();
         setSyncStatus("ok");
     }, () => setSyncStatus("error"));
@@ -1613,7 +1632,6 @@ function actualizarHistorial(){
 
                 <div class="acciones admin-only">
                     <button class="editBtn" onclick="event.stopPropagation(); editarPartido(${realIndex})" style="background:rgba(37,99,235,0.2);color:#93c5fd;border:1px solid rgba(37,99,235,0.4);">✏️ Editar</button>
-                    <button class="deleteBtn" onclick="event.stopPropagation(); eliminarPartido(${realIndex})">🗑 Eliminar</button>
                 </div>
             </div>`;
             return;
@@ -1668,8 +1686,7 @@ function actualizarHistorial(){
 
             <!-- Acciones admin -->
             <div class="acciones admin-only">
-                <button class="editBtn"   onclick="event.stopPropagation(); editarPartido(${realIndex})">✏️ Editar</button>
-                <button class="deleteBtn" onclick="event.stopPropagation(); eliminarPartido(${realIndex})">🗑 Eliminar</button>
+                <button class="editBtn" onclick="event.stopPropagation(); editarPartido(${realIndex})">✏️ Editar</button>
             </div>
         </div>`;
     });
