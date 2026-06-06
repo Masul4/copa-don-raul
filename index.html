@@ -1367,8 +1367,7 @@ function renderPlantilla(nombre){
             ? `<span style="font-size:11px; display:inline-flex; align-items:center; gap:3px;">🟥 ${rojas}</span>`
             : "";
 
-        const esMVP = mvpV > 0;
-        const clickAttr = esMVP ? `style="display:flex; align-items:center; gap:10px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:10px 14px; min-width:180px; cursor:pointer;" onclick="verPerfilJugador('${j}', '${nombre}')"` : `style="display:flex; align-items:center; gap:10px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:10px 14px; min-width:180px;"`;
+        const clickAttr = `style="display:flex; align-items:center; gap:10px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:10px 14px; min-width:180px; cursor:pointer;" onclick="verPerfilJugador('${j}', '${nombre}')"`;
         html += `
         <div ${clickAttr}>
             <div style="width:32px; height:32px; border-radius:50%; background:#2563eb; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; flex-shrink:0;">${i+1}</div>
@@ -1649,7 +1648,6 @@ function actualizarHistorial(){
 
                 <div class="acciones admin-only">
                     <button class="editBtn" onclick="event.stopPropagation(); editarPartido(${realIndex})" style="background:rgba(37,99,235,0.2);color:#93c5fd;border:1px solid rgba(37,99,235,0.4);">✏️ Editar</button>
-                    <button class="deleteBtn" onclick="event.stopPropagation(); eliminarPartido(${realIndex})">🗑 Eliminar</button>
                 </div>
             </div>`;
             return;
@@ -1711,7 +1709,6 @@ function actualizarHistorial(){
             <!-- Acciones admin -->
             <div class="acciones admin-only">
                 <button class="editBtn" onclick="event.stopPropagation(); editarPartido(${realIndex})">✏️ Editar</button>
-                <button class="deleteBtn" onclick="event.stopPropagation(); eliminarPartido(${realIndex})">🗑 Eliminar</button>
             </div>
         </div>`;
     });
@@ -1783,8 +1780,7 @@ function actualizarGoleadores(){
         }
         ultimoGoles = data.goles;
 
-        const esMVP = mvpJugadores.has(nombre);
-        const clickAttr = esMVP ? `style="cursor:pointer;" onclick="verPerfilJugador('${nombre}', '${data.equipo}')"` : "";
+        const clickAttr = `style="cursor:pointer;" onclick="verPerfilJugador('${nombre}', '${data.equipo}')"`;
 
         html += `
         <div class="goleador" ${clickAttr}>
@@ -1859,21 +1855,11 @@ function actualizarMVPs(){
         }
         ultimoVeces = data.veces;
 
-        const inputId = "fotoInput_" + data.jugador.replace(/[^a-z0-9]/gi, "");
-        const fotoBtn = admin ? `
-        <label for="${inputId}" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:#1e3a5f; border:1px solid #2563eb; font-size:13px; flex-shrink:0;" title="Subir foto">
-            📷
-            <input type="file" id="${inputId}" accept="image/*" style="display:none;" onchange="subirFotoJugador(event, '${data.jugador}')">
-        </label>` : "";
-
         html += `
         <div class="goleador" style="cursor:pointer;" onclick="verPerfilJugador('${data.jugador}', '${data.equipo}')">
             <div style="font-size:18px; font-weight:bold; width:40px;">#${posicion}</div>
             <div class="goleador-info">${buildJugadorInfo(data.jugador, data.equipo)}</div>
-            <div style="display:flex; align-items:center; gap:8px; margin-left:auto;">
-                ${fotoBtn}
-                <div style="display:flex; align-items:center; gap:6px; font-weight:bold; color:#fcd34d;"><span style="font-size:18px;">🌟</span><span style="font-size:20px;">${data.veces}</span></div>
-            </div>
+            <div style="display:flex; align-items:center; gap:6px; font-weight:bold; color:#fcd34d;"><span style="font-size:18px;">🌟</span><span style="font-size:20px;">${data.veces}</span></div>
         </div>`;
     });
     tabla.innerHTML = html;
@@ -1882,6 +1868,7 @@ function actualizarMVPs(){
 // ── Perfil jugador MVP ─────────────────────────────────────────────
 
 window.verPerfilJugador = function(jugador, equipo){
+    event && event.stopPropagation && event.stopPropagation();
     const foto = fotos[jugador];
 
     let golesTotal = 0;
@@ -1893,15 +1880,22 @@ window.verPerfilJugador = function(jugador, equipo){
     });
     const mvpsTotal = partidos.filter(p => p.mvp && p.mvp.jugador === jugador).length;
 
+    const inputIdPerfil = "fotoPerfilInput_" + jugador.replace(/[^a-z0-9]/gi, "");
     const fotoHTML = foto
         ? `<img src="${foto}" style="width:110px;height:110px;border-radius:50%;border:4px solid #fbbf24;object-fit:cover;box-shadow:0 0 24px rgba(251,191,36,0.4);">`
         : `<div style="width:110px;height:110px;border-radius:50%;border:4px solid #334155;background:#1e293b;display:flex;align-items:center;justify-content:center;font-size:40px;">👤</div>`;
+    const fotoBtnPerfil = admin ? `
+        <label for="${inputIdPerfil}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:#1e3a5f;border:1px solid #2563eb;border-radius:8px;padding:6px 14px;font-size:13px;margin-top:4px;">
+            📷 Cambiar foto
+            <input type="file" id="${inputIdPerfil}" accept="image/*" style="display:none;" onchange="subirFotoJugador(event, '${jugador}')">
+        </label>` : "";
 
     document.getElementById("contenidoPerfilJugador").innerHTML = `
     <div style="background:linear-gradient(160deg,var(--bg-base),var(--bg-elevated));padding:32px 24px 24px;">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:24px;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:24px;">
             ${fotoHTML}
-            <div style="text-align:center;">
+            ${fotoBtnPerfil}
+            <div style="text-align:center;margin-top:4px;">
                 <div style="font-size:22px;font-weight:900;letter-spacing:0.01em;">${jugador}</div>
                 <div class="equipo-pill" style="margin:6px auto 0;justify-content:center;">
                     <img src="${escudos[equipo]||ESCUDO_DEFAULT}" style="width:16px;height:16px;border-radius:50%;object-fit:cover;border:1px solid #475569;">
@@ -1930,16 +1924,13 @@ window.cerrarPerfilJugador = function(){
 };
 
 // ── Formulario de partido eliminado ──────────────────────────────────
-window.revisarEmpate   = function(){};
-window.toggleProgramado = function(){};
-window.guardarPartido  = async function(){};
 function limpiarFormulario(){ editando = -1; }
 
 window.editarPartido = function(index){
     const p = partidos[index];
     editando = index;
 
-    const tienResultado = !p.programado && p.g1 !== null && p.g1 !== undefined;
+    const tienResultado = p.g1 !== null && p.g1 !== undefined;
 
     // ── helpers ──
     const bgInput = "background:#1e293b; color:var(--text)";
@@ -2292,8 +2283,8 @@ window.guardarEdicionCompleta = async function(){
             g1: null, g2: null,
             ganadorPenales: "",
             pen1: null, pen2: null,
-            fechaPartido: fechaProg,
-            horaPartido: horaProg
+            fechaPartido: fechaProg || null,
+            horaPartido: horaProg || null
         };
         editando = -1;
         await guardarDatos();
@@ -2390,13 +2381,6 @@ window.cerrarModalEditar = function(){
     editando = -1;
 };
 
-window.eliminarPartido = async function(index){
-    if(confirm("¿Eliminar partido?")){
-        partidos.splice(index, 1);
-        await guardarDatos();
-        recalcularTabla();
-    }
-};
 
 
 
@@ -2511,33 +2495,37 @@ async function registrarVisita(){
     if(localStorage.getItem("copaAdmin") === "1") return;
     try {
         const snap = await getDoc(refVisitas);
-        const data = snap.exists() ? snap.data() : { total: 0, log: [] };
-        const ahora = new Date();
-        const entrada = {
-            fecha: ahora.toLocaleDateString("es-CL"),
-            hora:  ahora.toLocaleTimeString("es-CL", { hour:"2-digit", minute:"2-digit" }),
-            ts:    ahora.getTime()
-        };
-        const log = [...(data.log || []), entrada].slice(-100);
-        await setDoc(refVisitas, { total: (data.total || 0) + 1, log, adminToken: "__visita__" });
+        const data = snap.exists() ? snap.data() : { total: 0, porFecha: {} };
+        const hoy = new Date().toLocaleDateString("es-CL");
+
+        // Mantener conteo por fecha y limpiar fechas de más de 7 días
+        const porFecha = { ...(data.porFecha || {}) };
+        porFecha[hoy] = (porFecha[hoy] || 0) + 1;
+
+        // Eliminar fechas antiguas (> 7 días)
+        const hace7 = new Date();
+        hace7.setDate(hace7.getDate() - 7);
+        Object.keys(porFecha).forEach(f => {
+            const [d, m, y] = f.split("-").map(Number);
+            if(new Date(y, m-1, d) < hace7) delete porFecha[f];
+        });
+
+        await setDoc(refVisitas, { total: (data.total || 0) + 1, porFecha, adminToken: "__visita__" });
     } catch(e){ console.warn("visitas:", e); }
 }
 
 function escucharVisitas(){
     onSnapshot(refVisitas, (snap) => {
         if(!snap.exists()) return;
-        const { total, log } = snap.data();
+        const { total, porFecha: pf } = snap.data();
         const el = document.getElementById("visitasPanel");
         if(!el) return;
 
-        // Agrupar por fecha
-        const porFecha = {};
-        (log || []).forEach(v => {
-            porFecha[v.fecha] = (porFecha[v.fecha] || 0) + 1;
-        });
+        const porFecha = pf || {};
+        const hoy = new Date().toLocaleDateString("es-CL");
+
         const diasRows = Object.entries(porFecha)
             .sort((a,b) => {
-                // formato dd-mm-yyyy → convertir a yyyy-mm-dd para comparar
                 const toISO = f => f.split("-").reverse().join("-");
                 return toISO(b[0]).localeCompare(toISO(a[0]));
             })
@@ -2554,7 +2542,7 @@ function escucharVisitas(){
                 <div style="font-size:12px;opacity:0.6;margin-top:4px;">Visitas totales</div>
             </div>
             <div style="flex:1;min-width:120px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;color:var(--text);">
-                <div style="font-size:32px;font-weight:900;">${(porFecha[new Date().toLocaleDateString("es-CL")] || 0)}</div>
+                <div style="font-size:32px;font-weight:900;">${porFecha[hoy] || 0}</div>
                 <div style="font-size:12px;opacity:0.6;margin-top:4px;">Hoy</div>
             </div>
         </div>
