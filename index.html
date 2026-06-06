@@ -845,7 +845,8 @@ function setSyncStatus(estado){
 async function guardarDatos(){
     setSyncStatus("loading");
     try {
-        await setDoc(refPartidos, { lista: partidos, adminToken: ADMIN_TOKEN });
+        const listaLimpia = JSON.parse(JSON.stringify(partidos, (k, v) => v === undefined ? null : v));
+        await setDoc(refPartidos, { lista: listaLimpia, adminToken: ADMIN_TOKEN });
         setSyncStatus("ok");
     } catch(e){
         console.error("Error guardando partidos:", e);
@@ -2349,8 +2350,8 @@ window.guardarEdicionCompleta = async function(){
         ganadorPenales, pen1, pen2,
         mvp,
         programado: false,
-        fechaPartido: undefined,
-        horaPartido: undefined
+        fechaPartido: null,
+        horaPartido: null
     };
 
     editando = -1;
