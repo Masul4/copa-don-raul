@@ -1661,6 +1661,7 @@ function actualizarHistorial(){
 
                 <div class="acciones admin-only">
                     <button class="editBtn" onclick="event.stopPropagation(); editarPartido(${realIndex})" style="background:rgba(37,99,235,0.2);color:#93c5fd;border:1px solid rgba(37,99,235,0.4);">✏️ Editar</button>
+                    <button class="deleteBtn" onclick="event.stopPropagation(); eliminarPartido(${realIndex})">🗑 Eliminar</button>
                 </div>
             </div>`;
             return;
@@ -1722,6 +1723,7 @@ function actualizarHistorial(){
             <!-- Acciones admin -->
             <div class="acciones admin-only">
                 <button class="editBtn" onclick="event.stopPropagation(); editarPartido(${realIndex})">✏️ Editar</button>
+                <button class="deleteBtn" onclick="event.stopPropagation(); eliminarPartido(${realIndex})">🗑 Eliminar</button>
             </div>
         </div>`;
     });
