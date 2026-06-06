@@ -2181,10 +2181,14 @@ window.agregarGolModal = async function(index, equipo){
         gecSel.style.display = this.value === "__gec__" ? "block" : "none";
     });
 
-    // Insertar debajo del botón que lo invocó
-    const listaGoles = document.getElementById("edit_listaGoles");
-    listaGoles.parentElement.insertBefore(div, listaGoles.nextSibling.nextSibling || null);
-    listaGoles.parentElement.appendChild(div);
+    // Insertar debajo de la lista de goles del equipo correspondiente
+    const eqKey = equipo.replace(/[^a-z0-9]/gi,"");
+    const listaGoles = document.getElementById(`edit_goles_${eqKey}`);
+    if(listaGoles){
+        listaGoles.parentElement.insertBefore(div, listaGoles.nextSibling);
+    } else {
+        document.getElementById("contenidoEditar").appendChild(div);
+    }
 };
 
 window.confirmarGolModal = async function(index, equipo, divId){
