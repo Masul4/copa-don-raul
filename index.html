@@ -626,15 +626,20 @@ button:hover{
 <!-- Botón creador en su propia barra, fuera del header -->
 <div id="creadorBar">
     <button id="temaToggleBtn" onclick="toggleModoColor()" style="text-decoration:none; font-size:14px; opacity:0.85; color:white; display:flex; align-items:center; gap:7px; background:var(--bg-elevated); border:1px solid var(--border); padding:7px 13px; border-radius:20px; font-weight:bold; box-shadow:0 2px 8px rgba(0,0,0,0.4); transition:opacity 0.2s, background 0.3s, border-color 0.3s; cursor:pointer;">🌙 Modo Oscuro</button>
+    <div style="display:flex; align-items:center; gap:10px;">
+    <span style="font-size:12px; opacity:0.6; color:white;">Si quieres modificar o añadir tu foto mándame un dm →</span>
     <a id="creador" href="https://instagram.com/m4sul" target="_blank">
         Creado por @m4sul
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" style="flex-shrink:0;">
             <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
         </svg>
     </a>
+    </div>
 </div>
 
 <div class="container">
+
+<div id="seccionPrediccion" style="display:none; margin-bottom:18px;"></div>
 
 <div class="grid">
 
@@ -690,6 +695,12 @@ button:hover{
 <div id="visitasPanel">
     <p style="opacity:0.5; font-size:13px;">Cargando estadísticas...</p>
 </div>
+</div>
+
+<div class="card admin-only" id="adminPrediccionCard" style="display:none;">
+<h2>🔮 Predicción activa</h2>
+<div id="adminPrediccionInfo" style="font-size:13px; opacity:0.7; margin-bottom:12px;"></div>
+<button onclick="desactivarPrediccion()" style="background:rgba(220,38,38,0.2);color:#fca5a5;border:1px solid rgba(220,38,38,0.4);padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;">❌ Desactivar predicción</button>
 </div>
 
 <div class="card">
@@ -824,6 +835,7 @@ const refPlantillas = doc(db, "copa", "plantillas");
 const refVisitas    = doc(db, "copa", "visitas");
 const refTrofeo     = doc(db, "copa", "trofeo");
 const refFotos      = doc(db, "copa", "fotos");
+const refPrediccion = doc(db, "copa", "prediccion");
 
 // Token de escritura — debe coincidir con copa/adminSecret.token en Firestore
 const ADMIN_TOKEN = "CopaRaul2025xK9mR!";
@@ -1648,6 +1660,7 @@ function actualizarHistorial(){
 
                 <div class="acciones admin-only">
                     <button class="editBtn" onclick="event.stopPropagation(); editarPartido(${realIndex})" style="background:rgba(37,99,235,0.2);color:#93c5fd;border:1px solid rgba(37,99,235,0.4);">✏️ Editar</button>
+                    <button class="editBtn" onclick="event.stopPropagation(); activarPrediccion(${realIndex})" style="background:rgba(139,92,246,0.2);color:#c4b5fd;border:1px solid rgba(139,92,246,0.4);">🔮 Predicción</button>
                 </div>
             </div>`;
             return;
@@ -1709,6 +1722,7 @@ function actualizarHistorial(){
             <!-- Acciones admin -->
             <div class="acciones admin-only">
                 <button class="editBtn" onclick="event.stopPropagation(); editarPartido(${realIndex})">✏️ Editar</button>
+                <button class="editBtn" onclick="event.stopPropagation(); activarPrediccion(${realIndex})" style="background:rgba(139,92,246,0.2);color:#c4b5fd;border:1px solid rgba(139,92,246,0.4);">🔮 Predicción</button>
             </div>
         </div>`;
     });
@@ -2498,8 +2512,13 @@ async function registrarVisita(){
         const data = snap.exists() ? snap.data() : { total: 0, porFecha: {} };
         const hoy = new Date().toLocaleDateString("es-CL");
 
-        // Mantener conteo por fecha y limpiar fechas de más de 7 días
+        // Migrar log viejo a porFecha si es necesario
         const porFecha = { ...(data.porFecha || {}) };
+        if(!data.porFecha && data.log && data.log.length > 0){
+            data.log.forEach(v => {
+                if(v.fecha) porFecha[v.fecha] = (porFecha[v.fecha] || 0) + 1;
+            });
+        }
         porFecha[hoy] = (porFecha[hoy] || 0) + 1;
 
         // Eliminar fechas antiguas (> 7 días)
@@ -2513,6 +2532,181 @@ async function registrarVisita(){
         await setDoc(refVisitas, { total: (data.total || 0) + 1, porFecha, adminToken: "__visita__" });
     } catch(e){ console.warn("visitas:", e); }
 }
+
+
+// ── PREDICCIONES ──────────────────────────────────────────────────────
+
+function escucharPrediccion(){
+    onSnapshot(refPrediccion, (snap) => {
+        const sec = document.getElementById("seccionPrediccion");
+        const adminCard = document.getElementById("adminPrediccionCard");
+        const adminInfo = document.getElementById("adminPrediccionInfo");
+        if(!snap.exists()){
+            sec.style.display = "none";
+            if(adminCard) adminCard.style.display = "none";
+            return;
+        }
+        const data = snap.data();
+        // Admin panel
+        if(adminCard){
+            if(data.activo){
+                adminCard.style.display = "block";
+                if(adminInfo) adminInfo.textContent = `${data.equipo1} vs ${data.equipo2} — ${(data.votosE1||0)+(data.votosE2||0)} votos`;
+            } else {
+                adminCard.style.display = "none";
+            }
+        }
+        if(!data.activo){ sec.style.display = "none"; return; }
+        sec.style.display = "block";
+        renderPrediccion(data);
+    });
+}
+
+function renderPrediccion(data){
+    const sec = document.getElementById("seccionPrediccion");
+    const yaVoto = localStorage.getItem("pred_" + data.partidoId);
+    const totalVotos = (data.votosE1 || 0) + (data.votosE2 || 0);
+    const pctE1 = totalVotos > 0 ? Math.round((data.votosE1||0) / totalVotos * 100) : 50;
+    const pctE2 = 100 - pctE1;
+
+    const escudo1 = `<img src="${escudos[data.equipo1]||ESCUDO_DEFAULT}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--border);">`;
+    const escudo2 = `<img src="${escudos[data.equipo2]||ESCUDO_DEFAULT}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--border);">`;
+
+    let formulario = "";
+    if(!yaVoto){
+        formulario = `
+        <div style="display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px;">
+            <span style="font-size:13px;opacity:0.7;">Tu predicción:</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <div style="text-align:center;font-size:12px;opacity:0.6;">${data.equipo1}</div>
+                <input id="pred_g1" type="number" min="0" max="99" placeholder="0" oninput="checkEmpatePrediccion('${data.equipo1}','${data.equipo2}')" style="width:52px;padding:8px;text-align:center;font-size:18px;font-weight:bold;border-radius:8px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text);">
+                <span style="font-size:18px;font-weight:bold;">-</span>
+                <input id="pred_g2" type="number" min="0" max="99" placeholder="0" oninput="checkEmpatePrediccion('${data.equipo1}','${data.equipo2}')" style="width:52px;padding:8px;text-align:center;font-size:18px;font-weight:bold;border-radius:8px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text);">
+                <div style="text-align:center;font-size:12px;opacity:0.6;">${data.equipo2}</div>
+            </div>
+            <button onclick="enviarPrediccion('${data.partidoId}','${data.equipo1}','${data.equipo2}')" style="background:#2563eb;color:white;border:none;padding:8px 20px;border-radius:8px;font-weight:bold;cursor:pointer;">Votar</button>
+        </div>
+        <div id="pred_penales_selector" style="display:none;text-align:center;margin-top:10px;">
+            <span style="font-size:12px;opacity:0.6;">¿Quién gana en penales?</span>
+            <div style="display:flex;gap:8px;justify-content:center;margin-top:6px;">
+                <button onclick="setPenalGanador('${data.equipo1}')" id="pred_pen_e1" style="padding:6px 16px;border-radius:8px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text);cursor:pointer;font-weight:600;">${data.equipo1}</button>
+                <button onclick="setPenalGanador('${data.equipo2}')" id="pred_pen_e2" style="padding:6px 16px;border-radius:8px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text);cursor:pointer;font-weight:600;">${data.equipo2}</button>
+            </div>
+        </div>`;
+    } else {
+        const miPred = JSON.parse(yaVoto);
+        formulario = `<div style="text-align:center;margin-top:12px;font-size:13px;opacity:0.6;">✅ Ya votaste: <strong>${miPred.g1} - ${miPred.g2}</strong></div>`;
+    }
+
+    sec.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px 24px;">
+        <div style="font-size:12px;opacity:0.5;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;">⚽ PARTIDO DE LA SEMANA</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px;">
+            <div style="display:flex;align-items:center;gap:8px;font-weight:bold;">${escudo1} ${data.equipo1}</div>
+            <div style="font-size:22px;font-weight:900;opacity:0.4;">vs</div>
+            <div style="display:flex;align-items:center;gap:8px;font-weight:bold;">${data.equipo2} ${escudo2}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:42px 1fr 42px;align-items:center;gap:10px;margin-bottom:4px;">
+            <div style="font-size:13px;font-weight:bold;text-align:right;color:#60a5fa;">${pctE1}%</div>
+            <div style="height:14px;border-radius:7px;overflow:hidden;display:flex;width:100%;">
+                <div style="width:${pctE1}%;background:#2563eb;transition:width 0.5s;"></div>
+                <div style="width:${pctE2}%;background:#dc2626;transition:width 0.5s;"></div>
+            </div>
+            <div style="font-size:13px;font-weight:bold;text-align:left;color:#f87171;">${pctE2}%</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;opacity:0.45;margin-bottom:4px;">
+            <span>${data.equipo1}</span><span>${totalVotos} voto${totalVotos!==1?"s":""}</span><span>${data.equipo2}</span>
+        </div>
+        ${formulario}
+    </div>`;
+}
+
+let _predPenalGanador = null;
+
+window.checkEmpatePrediccion = function(equipo1, equipo2){
+    const g1 = parseInt(document.getElementById("pred_g1")?.value);
+    const g2 = parseInt(document.getElementById("pred_g2")?.value);
+    const sel = document.getElementById("pred_penales_selector");
+    if(sel){
+        if(!isNaN(g1) && !isNaN(g2) && g1 === g2){
+            sel.style.display = "block";
+        } else {
+            sel.style.display = "none";
+            _predPenalGanador = null;
+            const b1 = document.getElementById("pred_pen_e1");
+            const b2 = document.getElementById("pred_pen_e2");
+            if(b1) b1.style.background = "var(--bg-elevated)";
+            if(b2) b2.style.background = "var(--bg-elevated)";
+        }
+    }
+};
+
+window.setPenalGanador = function(equipo){
+    _predPenalGanador = equipo;
+    const b1 = document.getElementById("pred_pen_e1");
+    const b2 = document.getElementById("pred_pen_e2");
+    if(b1) b1.style.background = b1.textContent.trim() === equipo ? "#2563eb" : "var(--bg-elevated)";
+    if(b2) b2.style.background = b2.textContent.trim() === equipo ? "#2563eb" : "var(--bg-elevated)";
+};
+
+window.enviarPrediccion = async function(partidoId, equipo1, equipo2){
+    const g1 = parseInt(document.getElementById("pred_g1")?.value);
+    const g2 = parseInt(document.getElementById("pred_g2")?.value);
+    if(isNaN(g1) || isNaN(g2)){ alert("Ingresa un resultado válido"); return; }
+
+    let ganaEquipo;
+    if(g1 > g2){
+        ganaEquipo = equipo1;
+    } else if(g2 > g1){
+        ganaEquipo = equipo2;
+    } else {
+        if(!_predPenalGanador) return;
+        ganaEquipo = _predPenalGanador;
+    }
+
+    const ganaE1 = ganaEquipo === equipo1;
+    try {
+        const snap = await getDoc(refPrediccion);
+        const data = snap.exists() ? snap.data() : { votosE1:0, votosE2:0 };
+        const update = {
+            ...data,
+            votosE1: (data.votosE1||0) + (ganaE1 ? 1 : 0),
+            votosE2: (data.votosE2||0) + (!ganaE1 ? 1 : 0),
+        };
+        await setDoc(refPrediccion, update);
+        localStorage.setItem("pred_" + partidoId, JSON.stringify({ g1, g2, penales: _predPenalGanador }));
+        _predPenalGanador = null;
+    } catch(e){ console.error(e); alert("Error al votar"); }
+};
+
+// ── Admin: activar predicción ──────────────────────────────────────────
+window.activarPrediccion = async function(index){
+    const p = partidos[index];
+    if(!p) return;
+    if(!p.programado && p.g1 !== null && p.g1 !== undefined){
+        alert("Solo puedes activar predicciones para partidos que aún no se han jugado.");
+        return;
+    }
+    const partidoId = `${p.equipo1}_${p.equipo2}_${p.fecha}`.replace(/\s/g,"_");
+    await setDoc(refPrediccion, {
+        activo: true,
+        partidoId,
+        equipo1: p.equipo1,
+        equipo2: p.equipo2,
+        votosE1: 0,
+        votosE2: 0,
+        adminToken: ADMIN_TOKEN
+    });
+    alert(`Predicción activada para ${p.equipo1} vs ${p.equipo2}`);
+};
+
+window.desactivarPrediccion = async function(){
+    const snap = await getDoc(refPrediccion);
+    if(snap.exists()){
+        await setDoc(refPrediccion, { ...snap.data(), activo: false });
+    }
+};
+
 
 function escucharVisitas(){
     onSnapshot(refVisitas, (snap) => {
@@ -2546,8 +2740,7 @@ function escucharVisitas(){
                 <div style="font-size:12px;opacity:0.6;margin-top:4px;">Hoy</div>
             </div>
         </div>
-        <div style="font-size:12px;opacity:0.5;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em;">Últimos 7 días</div>
-        <div style="display:flex;flex-direction:column;gap:6px;">${diasRows || "<p style='opacity:0.4;font-size:13px;'>Sin datos aún</p>"}</div>`;
+`;
     });
 }
 
@@ -2763,6 +2956,7 @@ escucharTrofeo();
 escucharFotos();
 registrarVisita();
 escucharVisitas();
+escucharPrediccion();
 
 </script>
 
