@@ -2790,7 +2790,7 @@ window.activarPrediccion = async function(index){
         alert("Solo puedes activar predicciones para partidos que aún no se han jugado.");
         return;
     }
-    const partidoId = `${p.equipo1}_${p.equipo2}_${p.fecha}`.replace(/\s/g,"_");
+    const partidoId = `${p.equipo1}_${p.equipo2}_${p.fecha}_${Date.now()}`.replace(/\s/g,"_");
     await setDoc(refPrediccion, {
         activo: true,
         partidoId,
