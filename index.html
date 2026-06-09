@@ -2592,11 +2592,12 @@ function escucharPrediccion(){
         }
         if(!data.activo){ sec.style.display = "none"; return; }
         sec.style.display = "block";
+        window._lastPredSnap = data;
         renderPrediccion(data);
     });
 }
 
-function renderPrediccion(data){
+function renderPrediccion(data, prevValues){
     const sec = document.getElementById("seccionPrediccion");
     const yaVoto = localStorage.getItem("pred_" + data.partidoId);
     const totalVotos = (data.votosE1 || 0) + (data.votosE2 || 0);
@@ -2675,9 +2676,22 @@ function renderPrediccion(data){
             </div>
             <button onclick="enviarPrediccion('${data.partidoId}','${data.equipo1}','${data.equipo2}')" style="background:#2563eb;color:white;border:none;padding:8px 22px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:13px;">Votar</button>
         </div>`;
+        // Pre-rellenar si viene de edición
+        if(prevValues){
+            requestAnimationFrame(() => {
+                const i1 = document.getElementById("pred_g1");
+                const i2 = document.getElementById("pred_g2");
+                if(i1 && prevValues.g1 !== undefined) i1.value = prevValues.g1;
+                if(i2 && prevValues.g2 !== undefined) i2.value = prevValues.g2;
+            });
+        }
     } else {
         const miPred = JSON.parse(yaVoto);
-        formulario = `<div style="text-align:center;font-size:13px;opacity:0.6;margin-top:4px;">✅ Ya votaste: <strong>${miPred.g1} – ${miPred.g2}${miPred.penales ? ' (pen: '+miPred.penales+')' : ''}</strong></div>`;
+        formulario = `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+            <div style="font-size:13px;opacity:0.6;">✅ Votaste: <strong>${miPred.g1} – ${miPred.g2}${miPred.penales ? ' <span style=\"font-size:11px;\">(pen: '+miPred.penales+')</span>' : ''}</strong></div>
+            <button onclick="editarPrediccion('${data.partidoId}','${data.equipo1}','${data.equipo2}')" style="background:transparent;color:var(--text);border:1px solid var(--border);padding:5px 14px;border-radius:8px;font-size:12px;cursor:pointer;opacity:0.7;">✏️ Cambiar predicción</button>
+        </div>`;
     }
 
     sec.innerHTML = `
@@ -2748,9 +2762,20 @@ window.setPenalGanador = function(equipo){
     if(b2) b2.style.background = b2.textContent.trim() === equipo ? "#2563eb" : "var(--bg-elevated)";
 };
 
+window.editarPrediccion = function(partidoId, equipo1, equipo2){
+    // Borrar voto del localStorage para permitir re-votar
+    // El voto anterior se descuenta en enviarPrediccion
+    const prev = localStorage.getItem("pred_" + partidoId);
+    if(prev) window._predAnterior = { ...JSON.parse(prev), partidoId, equipo1, equipo2 };
+    localStorage.removeItem("pred_" + partidoId);
+    // Re-renderizar mostrando el formulario con valores previos
+    const snap = window._lastPredSnap;
+    if(snap) renderPrediccion(snap, { g1: JSON.parse(prev||"{}").g1, g2: JSON.parse(prev||"{}").g2 });
+};
+
 window.enviarPrediccion = async function(partidoId, equipo1, equipo2){
-    // Verificar si ya votó antes de procesar
-    if(localStorage.getItem("pred_" + partidoId)){
+    // Solo bloquear si ya votó Y no viene de una edición
+    if(localStorage.getItem("pred_" + partidoId) && !window._predAnterior){
         alert("Ya votaste en esta predicción.");
         return;
     }
@@ -2772,15 +2797,34 @@ window.enviarPrediccion = async function(partidoId, equipo1, equipo2){
     try {
         const snap = await getDoc(refPrediccion);
         const data = snap.exists() ? snap.data() : { votosE1:0, votosE2:0, resultados:[] };
-        const resultados = data.resultados || [];
+        let resultados = data.resultados || [];
+        let nuevoVotosE1 = data.votosE1 || 0;
+        let nuevoVotosE2 = data.votosE2 || 0;
+
+        // Si viene de edición, descontar el voto anterior
+        const prev = window._predAnterior;
+        if(prev && prev.partidoId === partidoId){
+            const claveAnterior = `${prev.g1}-${prev.g2}${prev.penales ? '_pen_'+prev.penales : ''}`;
+            const prevGanaE1 = prev.g1 > prev.g2 ? true : prev.g2 > prev.g1 ? false : prev.penales === equipo1;
+            const idxPrev = resultados.findIndex(r => r.clave === claveAnterior);
+            if(idxPrev >= 0){
+                resultados[idxPrev].count = Math.max(0, resultados[idxPrev].count - 1);
+                if(resultados[idxPrev].count === 0) resultados.splice(idxPrev, 1);
+            }
+            nuevoVotosE1 = Math.max(0, nuevoVotosE1 - (prevGanaE1 ? 1 : 0));
+            nuevoVotosE2 = Math.max(0, nuevoVotosE2 - (!prevGanaE1 ? 1 : 0));
+            window._predAnterior = null;
+        }
+
+        // Sumar nuevo voto
         const clave = `${g1}-${g2}${_predPenalGanador ? '_pen_'+_predPenalGanador : ''}`;
         const idx = resultados.findIndex(r => r.clave === clave);
         if(idx >= 0) resultados[idx].count++;
         else resultados.push({ clave, g1, g2, penales: _predPenalGanador || null, count: 1 });
         await setDoc(refPrediccion, {
             ...data,
-            votosE1: (data.votosE1||0) + (ganaE1 ? 1 : 0),
-            votosE2: (data.votosE2||0) + (!ganaE1 ? 1 : 0),
+            votosE1: nuevoVotosE1 + (ganaE1 ? 1 : 0),
+            votosE2: nuevoVotosE2 + (!ganaE1 ? 1 : 0),
             resultados,
         });
         localStorage.setItem("pred_" + partidoId, JSON.stringify({ g1, g2, penales: _predPenalGanador }));
