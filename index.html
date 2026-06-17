@@ -632,7 +632,6 @@ html:not(.light) button[style*="6d28d9"] { color: #c4b5fd !important; }
 <div id="creadorBar">
     <button id="temaToggleBtn" onclick="toggleModoColor()" style="text-decoration:none; font-size:14px; opacity:0.85; color:white; display:flex; align-items:center; gap:7px; background:var(--bg-elevated); border:1px solid var(--border); padding:7px 13px; border-radius:20px; font-weight:bold; box-shadow:0 2px 8px rgba(0,0,0,0.4); transition:opacity 0.2s, background 0.3s, border-color 0.3s; cursor:pointer;">🌙 Modo Oscuro</button>
     <div style="display:flex; align-items:center; gap:10px;">
-    <span style="font-size:12px; opacity:0.6; color:white;">Si quieres modificar o añadir tu foto mándame un dm →</span>
     <a id="creador" href="https://instagram.com/m4sul" target="_blank">
         Creado por @m4sul
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" style="flex-shrink:0;">
@@ -644,7 +643,6 @@ html:not(.light) button[style*="6d28d9"] { color: #c4b5fd !important; }
 
 <div class="container">
 
-<div id="seccionPrediccion" style="display:none; margin-bottom:18px;"></div>
 
 <div class="grid">
 
@@ -691,10 +689,6 @@ html:not(.light) button[style*="6d28d9"] { color: #c4b5fd !important; }
 
 </div>
 
-
-
-
-
 <div class="card admin-only">
 <h2>📊 Visualizaciones</h2>
 <div id="visitasPanel">
@@ -702,12 +696,7 @@ html:not(.light) button[style*="6d28d9"] { color: #c4b5fd !important; }
 </div>
 </div>
 
-<div class="card admin-only" id="adminPrediccionCard" style="display:none;">
-<h2>🔮 Predicción activa</h2>
-<div id="adminPrediccionInfo" style="font-size:13px; opacity:0.7; margin-bottom:12px;"></div>
-<div id="adminPrediccionDetalle" style="margin-bottom:14px;"></div>
-<button onclick="desactivarPrediccion()" style="background:rgba(220,38,38,0.15);color:#dc2626;border:1px solid rgba(220,38,38,0.4);padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;">❌ Desactivar predicción</button>
-</div>
+
 
 <div class="card">
 
@@ -744,6 +733,13 @@ html:not(.light) button[style*="6d28d9"] { color: #c4b5fd !important; }
 
 </div>
 
+</div>
+
+<!-- Modal predicción partido -->
+<div id="modalPrediccion" class="modal">
+<div class="modal-content" style="max-width:560px;padding:0;overflow:hidden;">
+    <div id="contenidoPrediccion"></div>
+</div>
 </div>
 
 <!-- Modal goles partido -->
@@ -841,9 +837,9 @@ const refPlantillas = doc(db, "copa", "plantillas");
 const refVisitas    = doc(db, "copa", "visitas");
 const refTrofeo     = doc(db, "copa", "trofeo");
 const refFotos      = doc(db, "copa", "fotos");
-const refPrediccion = doc(db, "copa", "prediccion");
+const refPrediccionLegacy = doc(db, "copa", "prediccion");
 
-// Token de escritura — debe coincidir con copa/adminSecret.token en Firestore
+
 const ADMIN_TOKEN = "CopaRaul2025xK9mR!";
 
 function setSyncStatus(estado){
@@ -1007,10 +1003,6 @@ function iniciarEquipos(){
     }));
 }
 
-function llenarSelects(){
-    // formulario eliminado, no se necesita
-}
-
 window.subirEscudo = function(event, equipo){
     const file = event.target.files[0];
     if(!file) return;
@@ -1085,11 +1077,11 @@ function recalcularTabla(){
 function actualizarTabla(){
     const body = document.getElementById("tablaBody");
     body.innerHTML = "";
+    const clasificacion = calcularClasificacionMatematica();
 
     equipos.forEach((e, index) => {
         const clase = index < 4 ? "gold" : "silver";
 
-        // Calcular últimos 3 partidos para este equipo
         const ultimos = partidos
             .filter(p => !p.programado && (p.equipo1 === e.nombre || p.equipo2 === e.nombre))
             .slice(-3);
@@ -1101,13 +1093,10 @@ function actualizarTabla(){
             const gC   = esE1 ? p.g2 : p.g1;
             let icono;
             if(gF > gC){
-                // Victoria normal
                 icono = `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#16a34a;font-size:11px;font-weight:bold;">✓</span>`;
             } else if(gF < gC){
-                // Derrota normal
                 icono = `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#dc2626;font-size:11px;font-weight:bold;">✕</span>`;
             } else {
-                // Empate con penales: mitad amarillo + mitad verde (ganó) o mitad rojo (perdió)
                 const gano = p.ganadorPenales === e.nombre;
                 const colorDer = gano ? "#16a34a" : "#dc2626";
                 icono = `<svg width="22" height="22" viewBox="0 0 22 22" style="flex-shrink:0;" title="${gano ? 'Empate - ganó penales' : 'Empate - perdió penales'}">
@@ -1146,7 +1135,6 @@ function actualizarTabla(){
     });
 }
 
-// ── Historial de equipo ────────────────────────────────────────────
 window.verHistorialEquipo = function(nombre){
     const partidosEquipo = partidos
         .map((p, i) => ({ ...p, _idx: i }))
@@ -1156,12 +1144,18 @@ window.verHistorialEquipo = function(nombre){
     const eq = equipos.find(e => e.nombre === nombre);
 
     document.getElementById("historialEscudo").src = escudos[nombre] || ESCUDO_DEFAULT;
-    document.getElementById("historialNombreEquipo").textContent = nombre;
+    const clasificacion = calcularClasificacionMatematica();
+    const clasi = clasificacion[nombre];
+    const badgeHTML = clasi?.confirmadoOro
+        ? ' <span title="Clasificado a Copa de Oro" style="font-size:18px;vertical-align:middle;">🏆</span>'
+        : clasi?.confirmadoPlata
+        ? ' <span title="Clasificado a Copa de Plata" style="font-size:18px;vertical-align:middle;">🥈</span>'
+        : '';
+    document.getElementById("historialNombreEquipo").innerHTML = nombre + badgeHTML;
     document.getElementById("historialResumen").textContent =
         eq ? `${eq.PJ} PJ · ${eq.G} G · ${eq.Eg} Eg · ${eq.Ep} Ep · ${eq.P} P · ${eq.GF} GF · ${eq.GC} GC · ${eq.PTS} PTS` : "";
 
     _equipoHistorialActual = nombre;
-    // Resetear a tab Partidos
     switchHistorialTab('partidos');
 
     const contenedor = document.getElementById("historialPartidosEquipo");
@@ -1174,10 +1168,8 @@ window.verHistorialEquipo = function(nombre){
     }
 
     partidosEquipo.forEach(p => {
-        // Respetar orden original: equipo1 siempre a la izquierda, equipo2 a la derecha
         const esLocal = p.equipo1 === nombre;
 
-        // Resultado desde la perspectiva del equipo seleccionado
         const gF = esLocal ? p.g1 : p.g2;
         const gC = esLocal ? p.g2 : p.g1;
         let resultado, badgeClass;
@@ -1193,7 +1185,6 @@ window.verHistorialEquipo = function(nombre){
 
         const divId = `histo_${p._idx}`;
 
-        // Goles: equipo1 siempre izquierda, equipo2 siempre derecha (orden original del partido)
         let golesIzqH = "";
         let golesDerH = "";
         if(p.goles && p.goles.length > 0){
@@ -1202,7 +1193,6 @@ window.verHistorialEquipo = function(nombre){
             golesOrdenH.forEach(g => {
                 const emojis = "⚽ ".repeat(g.cantidad || 1).trim();
                 if(g.ownGoal){
-                    // GEC: mostrar en la columna del equipo en que fue registrado (quien se beneficia)
                     if(g.equipo === p.equipo1){
                         golesIzqH += `<div style="display:flex; align-items:center; justify-content:space-between; background:var(--score-bg); border:1px solid rgba(220,38,38,0.35); padding:8px 12px; border-radius:10px; margin-bottom:6px; gap:8px; color:var(--text);">
                             <span style="font-weight:600; font-size:13px;">GEC</span>
@@ -1331,7 +1321,6 @@ function renderPlantilla(nombre){
     const sec = document.getElementById("historialPlantillaEquipo");
     const jugadores = plantillas[nombre] || [];
 
-    // Calcular goles por jugador del equipo
     const golesJugador = {};
     partidos.forEach(p => {
         if(!p.goles) return;
@@ -1342,7 +1331,6 @@ function renderPlantilla(nombre){
         });
     });
 
-    // Calcular MVPs por jugador del equipo
     const mvpsJugador = {};
     partidos.forEach(p => {
         if(!p.mvp || !p.mvp.jugador) return;
@@ -1350,7 +1338,6 @@ function renderPlantilla(nombre){
         mvpsJugador[p.mvp.jugador] = (mvpsJugador[p.mvp.jugador] || 0) + 1;
     });
 
-    // Calcular tarjetas por jugador del equipo
     const amarillasJugador = {};
     const rojasJugador = {};
     partidos.forEach(p => {
@@ -1443,7 +1430,6 @@ window.borrarJugador = async function(equipo, idx){
     renderPlantilla(equipo);
 };
 
-// ── Tabs de fechas ─────────────────────────────────────────────────
 function renderFechasTabs(){
     const tabs = document.getElementById("fechasTabs");
     if(!tabs) return;
@@ -1452,7 +1438,6 @@ function renderFechasTabs(){
         tabs.innerHTML += `<button class="fecha-tab ${fechaActiva === i ? 'activa' : ''}" onclick="cambiarFecha(${i})">Fecha ${i}</button>`;
     }
 
-    // Copa tabs en su propia fila
     const copaRow = document.getElementById("copasTabs");
     if(copaRow){
         copaRow.innerHTML = `
@@ -1526,7 +1511,6 @@ function renderBracket(tipo){
         </div>`;
     }
 
-    // Layout: [SF1 arriba] --conector-- [FINAL centro] --conector-- [SF2 abajo]
     historial.innerHTML = `
     <div style="padding:4px 0 12px;">
         <div style="font-size:17px;font-weight:800;margin-bottom:20px;">
@@ -1579,7 +1563,6 @@ function renderBracket(tipo){
         </div>
     </div>`;
 
-    // Dibujar conectores dinámicamente una vez que el DOM esté pintado
     requestAnimationFrame(() => dibujarConectorBracket(tipo));
 }
 
@@ -1605,12 +1588,10 @@ function actualizarHistorial(){
 
     historial.innerHTML = '<div class="partidos-grid" id="partidosGrid"></div>';
     const grid = document.getElementById("partidosGrid");
-    let dragSrcIdx = null;
 
     partidosFecha.forEach((p) => {
         const realIndex = p._idx;
 
-        // ── Partido programado (sin resultado) ──
         if(p.programado){
             const dias  = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
             let centroTop = "Por definirse";
@@ -1641,15 +1622,15 @@ function actualizarHistorial(){
                 ondragleave="this.style.outline='';"
                 ondrop="event.stopPropagation(); this.style.outline=''; window.reordenarPartido(${realIndex});">
 
-                <!-- Banda punteada azul -->
                 <div style="height:4px; background:repeating-linear-gradient(90deg,#3b82f6 0,#3b82f6 8px,transparent 8px,transparent 14px); border-radius:16px 16px 0 0; opacity:0.5;"></div>
 
-                <!-- Mismo layout que partido normal: equipo1 | centro | equipo2 -->
                 <div style="display:flex; align-items:center; padding:14px 12px 10px;">
 
                     <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;">
-                        <img src="${escudos[p.equipo1] || ESCUDO_DEFAULT}" class="escudo">
-                        <span style="font-size:12px; font-weight:600;">${p.equipo1}</span>
+                        <div style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;">
+                            <img src="${escudos[p.equipo1] || ESCUDO_DEFAULT}" class="escudo">
+                        </div>
+                        <span style="font-size:12px; font-weight:600; min-height:32px; display:flex; align-items:center; justify-content:center;">${p.equipo1}</span>
                     </div>
 
                     <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 10px; gap:2px; min-width:80px;">
@@ -1658,24 +1639,24 @@ function actualizarHistorial(){
                     </div>
 
                     <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;">
-                        <img src="${escudos[p.equipo2] || ESCUDO_DEFAULT}" class="escudo">
-                        <span style="font-size:12px; font-weight:600;">${p.equipo2}</span>
+                        <div style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;">
+                            <img src="${escudos[p.equipo2] || ESCUDO_DEFAULT}" class="escudo">
+                        </div>
+                        <span style="font-size:12px; font-weight:600; min-height:32px; display:flex; align-items:center; justify-content:center;">${p.equipo2}</span>
                     </div>
 
                 </div>
 
-                <div class="acciones admin-only">
-                    <button class="editBtn" onclick="event.stopPropagation(); editarPartido(${realIndex})">✏️ Editar</button>
-                    <button class="editBtn" onclick="event.stopPropagation(); activarPrediccion(${realIndex})" style="background:rgba(139,92,246,0.15);color:#6d28d9;border:1px solid rgba(139,92,246,0.4);" onmouseover="this.style.background='rgba(139,92,246,0.3)'" onmouseout="this.style.background='rgba(139,92,246,0.15)'">🔮 Predicción</button>
+                <div style="padding:0 14px 12px; display:flex; gap:8px; align-items:center;">
+                    <button onclick="event.stopPropagation(); abrirPrediccionPartido(${realIndex})" style="flex:1; background:rgba(139,92,246,0.15);color:#7c3aed;border:1px solid rgba(139,92,246,0.4);padding:7px;border-radius:8px;font-size:13px;cursor:pointer;font-weight:600;">🔮 Predecir</button>
+                    ${admin ? `<button class="editBtn" onclick="event.stopPropagation(); editarPartido(${realIndex})">✏️ Editar</button>` : ""}
                 </div>
             </div>`;
             return;
         }
 
-        // ── Partido con resultado ──
         const win1 = p.g1 > p.g2 || p.ganadorPenales === p.equipo1;
         const win2 = p.g2 > p.g1 || p.ganadorPenales === p.equipo2;
-        const fueAPenales = !!p.ganadorPenales;
 
         const scoreHTML = p.ganadorPenales
             ? `${p.g1}<span style="font-size:11px;opacity:0.6;margin:0 1px;">(${p.pen1 ?? '?'})</span>
@@ -1702,9 +1683,8 @@ function actualizarHistorial(){
                 <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;">
                     <div style="position:relative; display:inline-block;">
                         <img src="${escudos[p.equipo1] || ESCUDO_DEFAULT}" class="escudo" style="${win1 ? 'border-color:#16a34a; box-shadow:0 0 12px rgba(22,163,74,0.5);' : 'opacity:' + (win2 ? '0.55' : '1') + ';'}">
-
                     </div>
-                    <span style="font-size:12px; font-weight:${win1 ? '700' : '500'}; opacity:${win2 ? '0.6' : '1'}; line-height:1.2;">${p.equipo1}</span>
+                    <span style="font-size:12px; font-weight:${win1 ? '700' : '500'}; opacity:${win2 ? '0.6' : '1'}; line-height:1.2; min-height:32px; display:flex; align-items:center; justify-content:center; text-align:center;">${p.equipo1}</span>
                 </div>
 
                 <!-- Marcador central -->
@@ -1718,9 +1698,8 @@ function actualizarHistorial(){
                 <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;">
                     <div style="position:relative; display:inline-block;">
                         <img src="${escudos[p.equipo2] || ESCUDO_DEFAULT}" class="escudo" style="${win2 ? 'border-color:#16a34a; box-shadow:0 0 12px rgba(22,163,74,0.5);' : 'opacity:' + (win1 ? '0.55' : '1') + ';'}">
-
                     </div>
-                    <span style="font-size:12px; font-weight:${win2 ? '700' : '500'}; opacity:${win1 ? '0.6' : '1'}; line-height:1.2;">${p.equipo2}</span>
+                    <span style="font-size:12px; font-weight:${win2 ? '700' : '500'}; opacity:${win1 ? '0.6' : '1'}; line-height:1.2; min-height:32px; display:flex; align-items:center; justify-content:center; text-align:center;">${p.equipo2}</span>
                 </div>
 
             </div>
@@ -1739,8 +1718,6 @@ function actualizarHistorial(){
     }
 }
 
-// ── Reordenamiento por click-swap ──────────────────────────────────
-// ── Goleadores ─────────────────────────────────────────────────────
 function buildJugadorInfo(nombre, equipo){
     const foto = fotos[nombre];
     if(foto){
@@ -1788,8 +1765,6 @@ function actualizarGoleadores(){
 
     let posicion = 0, ultimoGoles = null, salto = 0;
     let html = "";
-    const mvpJugadores = new Set(partidos.filter(p => p.mvp && p.mvp.jugador).map(p => p.mvp.jugador));
-
     ordenados.forEach(([nombre, data], index) => {
         if(ultimoGoles === null || data.goles < ultimoGoles){
             posicion = index + 1;
@@ -1813,7 +1788,6 @@ function actualizarGoleadores(){
     tabla.innerHTML = html;
 }
 
-// ── Tab switch Goleadores / MVPs ──────────────────────────────────
 window.switchTabGoleadores = function(tab){
     const btnG  = document.getElementById("tabGoleadoresBtn");
     const btnM  = document.getElementById("tabMVPBtn");
@@ -1884,8 +1858,6 @@ function actualizarMVPs(){
     tabla.innerHTML = html;
 }
 
-// ── Perfil jugador MVP ─────────────────────────────────────────────
-
 window.verPerfilJugador = function(jugador, equipo){
     event && event.stopPropagation && event.stopPropagation();
     const foto = fotos[jugador];
@@ -1942,20 +1914,15 @@ window.cerrarPerfilJugador = function(){
     cerrarModalAnimado("modalPerfilJugador");
 };
 
-// ── Formulario de partido eliminado ──────────────────────────────────
-function limpiarFormulario(){ editando = -1; }
-
 window.editarPartido = function(index){
     const p = partidos[index];
     editando = index;
 
     const tienResultado = p.g1 !== null && p.g1 !== undefined;
 
-    // ── helpers ──
     const bgInput = "background:var(--input-bg); color:var(--text)";
     const estiloInput = `width:100%; padding:10px; border:none; border-radius:8px; ${bgInput};`;
 
-    // ── Fecha/hora (solo si NO tiene resultado) ──
     const fechaHoraHTML = !tienResultado ? `
     <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:20px;">
         <h4 style="margin:0 0 12px 0; font-size:14px; opacity:0.8;">📅 Fecha y hora del partido</h4>
@@ -1965,7 +1932,6 @@ window.editarPartido = function(index){
         </div>
     </div>` : "";
 
-    // ── Resultado ──
     const esEmpate = tienResultado && Number(p.g1) === Number(p.g2);
     const resultadoHTML = `
     <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:20px;">
@@ -2004,12 +1970,9 @@ window.editarPartido = function(index){
         </div>
     </div>`;
 
-    // ── Goles por equipo (solo si tiene resultado) ──
     let golesHTML = "";
     if(tienResultado){
         const g1 = Number(p.g1), g2 = Number(p.g2);
-        const mostrarEq1 = true;
-        const mostrarEq2 = true;
 
         const golesEq = (eq) => {
             const lista = (p.goles||[]).filter(g => g.equipo === eq);
@@ -2082,7 +2045,6 @@ window.editarPartido = function(index){
         </div>`;
     }
 
-    // ── MVP (solo si tiene resultado) ──
     let mvpHTML = "";
     if(tienResultado){
         const todosJug = [
@@ -2121,7 +2083,6 @@ window.cargarResultadoProgramado = function(index){
     editarPartido(index);
 };
 
-
 window.onCambioResultado = function(index){
     const g1 = Number(document.getElementById("edit_g1")?.value ?? -1);
     const g2 = Number(document.getElementById("edit_g2")?.value ?? -1);
@@ -2144,56 +2105,8 @@ window.agregarTarjetaColumna = async function(index, equipo){
     editarPartido(index);
 };
 
-window.cargarResultadoProgramado = function(index){
-    editarPartido(index);
-};
-
 window.revisarEmpateModal = function(){
     onCambioResultado(editando);
-};
-
-window.invertirLocalVisitante = function(){
-    const eq1 = document.getElementById("edit_eq1");
-    const eq2 = document.getElementById("edit_eq2");
-    const g1  = document.getElementById("edit_g1");
-    const g2  = document.getElementById("edit_g2");
-    if(!eq1 || !eq2 || !g1 || !g2) return;
-
-    // Swap teams
-    const tmpEq = eq1.value;
-    eq1.value = eq2.value;
-    eq2.value = tmpEq;
-
-    // Swap goals
-    const tmpG = g1.value;
-    g1.value = g2.value;
-    g2.value = tmpG;
-
-    // Swap penalty labels and values if visible
-    const pen1 = document.getElementById("edit_pen1");
-    const pen2 = document.getElementById("edit_pen2");
-    const pen1Label = document.getElementById("edit_pen1Label");
-    const pen2Label = document.getElementById("edit_pen2Label");
-    if(pen1 && pen2){
-        const tmpPen = pen1.value;
-        pen1.value = pen2.value;
-        pen2.value = tmpPen;
-    }
-    if(pen1Label && pen2Label){
-        const tmpLabel = pen1Label.textContent;
-        pen1Label.textContent = pen2Label.textContent;
-        pen2Label.textContent = tmpLabel;
-    }
-
-    // Update the goles buttons labels
-    const btns = document.querySelectorAll("#contenidoEditar button");
-    btns.forEach(btn => {
-        if(btn.textContent.startsWith("+ Gol")) {
-            // rebuild them via re-render is complex; just update text
-        }
-    });
-
-    revisarEmpateModal();
 };
 
 window.agregarGolModal = async function(index, equipo){
@@ -2292,7 +2205,6 @@ window.guardarEdicionCompleta = async function(){
     const g1Str = g1El?.value ?? "";
     const g2Str = g2El?.value ?? "";
 
-    // ── Partido sin resultado: solo guardar fecha/hora ──
     if(g1Str === "" || g2Str === ""){
         const fechaProg = document.getElementById("edit_fechaProg")?.value || "";
         const horaProg  = document.getElementById("edit_horaProg")?.value  || "";
@@ -2312,18 +2224,15 @@ window.guardarEdicionCompleta = async function(){
         return;
     }
 
-    // ── Partido con resultado ──
     const g1 = Number(g1Str);
     const g2 = Number(g2Str);
 
-    // Si el marcador cambió respecto al guardado, limpiar goles
     const marcadorCambio = (p.g1 !== null && (p.g1 !== g1 || p.g2 !== g2));
     if(marcadorCambio && p.goles && p.goles.length > 0){
         if(!confirm(`El marcador cambió. ¿Limpiar los goles registrados?`)) return;
         partidos[editando].goles = [];
     }
 
-    // Penales si empate
     let ganadorPenales = "";
     let pen1 = null, pen2 = null;
     if(g1 === g2){
@@ -2342,7 +2251,6 @@ window.guardarEdicionCompleta = async function(){
         ganadorPenales = pen1 > pen2 ? p.equipo1 : p.equipo2;
     }
 
-    // MVP
     let mvp = null;
     const mvpSel = document.getElementById("edit_mvp");
     if(mvpSel && mvpSel.value){
@@ -2400,9 +2308,6 @@ window.cerrarModalEditar = function(){
     editando = -1;
 };
 
-
-
-
 function buildGolesColumnas(p){
     let golesIzq = "";
     let golesDer = "";
@@ -2414,7 +2319,6 @@ function buildGolesColumnas(p){
         golesOrdenados.forEach(g => {
             const emojis = "⚽ ".repeat(g.cantidad || 1).trim();
             if(g.ownGoal){
-                // GEC: mostrar en la columna del equipo en que fue registrado (quien se beneficia)
                 if(g.equipo === p.equipo1){
                     golesIzq += `<div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-elevated); border:1px solid rgba(220,38,38,0.35); padding:10px 14px; border-radius:10px; margin-bottom:8px; gap:10px;">
                         <span style="font-weight:600; font-size:14px;">GEC</span>
@@ -2508,16 +2412,13 @@ window.cerrarModal = function(){
     cerrarModalAnimado("modalGoles");
 };
 
-// ── Visitas ────────────────────────────────────────────────────────
 async function registrarVisita(){
-    // No contar visitas del admin
     if(localStorage.getItem("copaAdmin") === "1") return;
     try {
         const snap = await getDoc(refVisitas);
         const data = snap.exists() ? snap.data() : { total: 0, porFecha: {} };
         const hoy = new Date().toLocaleDateString("es-CL");
 
-        // Migrar log viejo a porFecha si es necesario
         const porFecha = { ...(data.porFecha || {}) };
         if(!data.porFecha && data.log && data.log.length > 0){
             data.log.forEach(v => {
@@ -2526,7 +2427,6 @@ async function registrarVisita(){
         }
         porFecha[hoy] = (porFecha[hoy] || 0) + 1;
 
-        // Eliminar fechas antiguas (> 7 días)
         const hace7 = new Date();
         hace7.setDate(hace7.getDate() - 7);
         Object.keys(porFecha).forEach(f => {
@@ -2538,223 +2438,263 @@ async function registrarVisita(){
     } catch(e){ console.warn("visitas:", e); }
 }
 
+function escucharPrediccion(){}
 
-// ── PREDICCIONES ──────────────────────────────────────────────────────
+function calcularClasificacionMatematica(){
+    const FECHAS_TOTAL = 7;
+    const PTS_VICTORIA = 3, PTS_EG = 2, PTS_EP = 1;
 
-function escucharPrediccion(){
-    onSnapshot(refPrediccion, (snap) => {
-        const sec = document.getElementById("seccionPrediccion");
-        const adminCard = document.getElementById("adminPrediccionCard");
-        const adminInfo = document.getElementById("adminPrediccionInfo");
-        if(!snap.exists()){
-            sec.style.display = "none";
-            if(adminCard) adminCard.style.display = "none";
-            return;
-        }
-        const data = snap.data();
-        // Admin panel
-        if(adminCard){
-            if(data.activo && admin){
-                adminCard.style.display = "block";
-                const total = (data.votosE1||0)+(data.votosE2||0);
-                if(adminInfo) adminInfo.textContent = `${data.equipo1} vs ${data.equipo2} — ${total} voto${total!==1?"s":""}`;
-                const detalle = document.getElementById("adminPrediccionDetalle");
-                if(detalle){
-                    const resultados = (data.resultados || []).slice().sort((a,b) => b.count - a.count);
-                    if(resultados.length === 0){
-                        detalle.innerHTML = `<p style="font-size:13px;opacity:0.45;margin:0;">Aún no hay votos.</p>`;
-                    } else {
-                        const filas = resultados.map(r => {
-                            const pen = r.penales ? `<span style="font-size:11px;opacity:0.55;margin-left:4px;">(pen: ${r.penales})</span>` : "";
-                            const ganador = r.g1 > r.g2 ? data.equipo1 : r.g2 > r.g1 ? data.equipo2 : (r.penales || "Empate");
-                            return `<tr>
-                                <td style="padding:7px 10px;font-size:15px;font-weight:bold;color:var(--text);">${r.g1} – ${r.g2}${pen}</td>
-                                <td style="padding:7px 10px;font-size:13px;opacity:0.7;color:var(--text);">${ganador}</td>
-                                <td style="padding:7px 10px;text-align:right;"><span style="background:var(--bg-elevated);border-radius:20px;padding:3px 10px;font-size:13px;font-weight:bold;color:var(--text);">${r.count} voto${r.count!==1?"s":""}</span></td>
-                            </tr>`;
-                        }).join("");
-                        detalle.innerHTML = `
-                        <div style="border:1px solid var(--border-light);border-radius:10px;overflow:hidden;margin-bottom:4px;">
-                            <table style="width:100%;border-collapse:collapse;">
-                                <thead><tr style="background:var(--th-bg);font-size:11px;opacity:0.6;text-transform:uppercase;letter-spacing:0.06em;">
-                                    <th style="padding:7px 10px;text-align:left;font-weight:600;color:var(--text);">Resultado</th>
-                                    <th style="padding:7px 10px;text-align:left;font-weight:600;color:var(--text);">Ganador</th>
-                                    <th style="padding:7px 10px;text-align:right;font-weight:600;color:var(--text);">Votos</th>
-                                </tr></thead>
-                                <tbody>${filas}</tbody>
-                            </table>
-                        </div>`;
-                    }
-                }
-            } else {
-                adminCard.style.display = "none";
+    // Calcular partidos pendientes por equipo
+    const pendientesPor = {};
+    equipos.forEach(e => { pendientesPor[e.nombre] = 0; });
+    partidos.forEach(p => {
+        if(!p.programado) return;
+        if(pendientesPor[p.equipo1] !== undefined) pendientesPor[p.equipo1]++;
+        if(pendientesPor[p.equipo2] !== undefined) pendientesPor[p.equipo2]++;
+    });
+
+    // Puntos máximos alcanzables por cada equipo
+    const ptsPosibles = {};
+    equipos.forEach(e => {
+        ptsPosibles[e.nombre] = e.PTS + pendientesPor[e.nombre] * PTS_VICTORIA;
+    });
+
+    const resultado = {};
+    equipos.forEach((e, idx) => {
+        const nombre = e.nombre;
+        const pts = e.PTS;
+        const posActual = idx; // ya ordenados por pts
+
+        // ¿Puede este equipo bajar del top 4?
+        // Los equipos por debajo que podrían superarlo
+        let confirmadoOro = false;
+        let confirmadoPlata = false;
+        let descartadoOro = false;
+        let descartadoPlata = false;
+
+        if(posActual < 4){
+            // Está en top 4 — ¿puede alguien de fuera alcanzarlo?
+            const equiposFuera = equipos.slice(4);
+            const puedenSuperarlo = equiposFuera.filter(f => ptsPosibles[f.nombre] > pts);
+            // ¿Cuántos pueden superarlo? si son menos de (4 - posActual - 1) no puede salir del top4
+            const cuantosNecesitanSuperarlo = 4 - posActual; // cuántos de abajo necesitan superarlo para sacarlo
+            if(puedenSuperarlo.length < cuantosNecesitanSuperarlo){
+                confirmadoOro = true;
+            }
+        } else {
+            // Está fuera del top 4 — ¿puede llegar al top 4?
+            const ptsPropios = ptsPosibles[nombre];
+            const equiposArriba = equipos.slice(0, 4);
+            // Cuántos del top4 pueden tener más puntos que yo en el máximo
+            const porDelanteConMax = equiposArriba.filter(a => a.PTS > ptsPropios).length;
+            if(porDelanteConMax >= 4){
+                descartadoOro = true;
+                confirmadoPlata = true;
             }
         }
-        if(!data.activo){ sec.style.display = "none"; return; }
-        sec.style.display = "block";
-        window._lastPredSnap = data;
-        renderPrediccion(data);
+
+        if(posActual >= 4){
+            // ¿Puede caer del top 8 (imposible con 8 equipos totales)
+            confirmadoPlata = confirmadoPlata || descartadoOro;
+        }
+
+        resultado[nombre] = { confirmadoOro, confirmadoPlata, descartadoOro };
     });
+
+    return resultado;
 }
 
-function renderPrediccion(data, prevValues){
-    const sec = document.getElementById("seccionPrediccion");
-    const yaVoto = localStorage.getItem("pred_" + data.partidoId);
+window.abrirPrediccionPartido = async function(index){
+    const p = partidos[index];
+    if(!p || !p.programado) return;
+
+    const partidoId = `pred_${p.equipo1}_${p.equipo2}_f${p.fecha}`.replace(/\s/g,"_");
+    const refPred = doc(db, "predicciones", partidoId);
+
+    let snap = await getDoc(refPred);
+
+    if(!snap.exists()){
+        const refViejo = refPrediccionLegacy;
+        const snapViejo = await getDoc(refViejo);
+        if(snapViejo.exists()){
+            const viejo = snapViejo.data();
+            const mismoPartido = viejo.equipo1 === p.equipo1 && viejo.equipo2 === p.equipo2;
+            if(mismoPartido && viejo.resultados){
+                await setDoc(refPred, {
+                    equipo1: viejo.equipo1,
+                    equipo2: viejo.equipo2,
+                    partidoId,
+                    votosE1: viejo.votosE1 || 0,
+                    votosE2: viejo.votosE2 || 0,
+                    resultados: viejo.resultados || []
+                });
+                snap = await getDoc(refPred);
+            }
+        }
+    }
+
+    const data = snap.exists() ? snap.data() : { votosE1:0, votosE2:0, resultados:[], equipo1: p.equipo1, equipo2: p.equipo2, partidoId };
+
+    renderModalPrediccion(data, partidoId, p.equipo1, p.equipo2, refPred);
+    abrirModal("modalPrediccion");
+};
+
+function renderModalPrediccion(data, partidoId, equipo1, equipo2, refPred){
+    const yaVoto = localStorage.getItem("pred_" + partidoId);
     const totalVotos = (data.votosE1 || 0) + (data.votosE2 || 0);
     const pctE1 = totalVotos > 0 ? Math.round((data.votosE1||0) / totalVotos * 100) : 0;
     const pctE2 = totalVotos > 0 ? (100 - pctE1) : 0;
 
-    const escudo1 = `<img src="${escudos[data.equipo1]||ESCUDO_DEFAULT}" style="width:68px;height:68px;border-radius:50%;object-fit:cover;border:3px solid var(--border);box-shadow:0 4px 14px rgba(0,0,0,0.4);">`;
-    const escudo2 = `<img src="${escudos[data.equipo2]||ESCUDO_DEFAULT}" style="width:68px;height:68px;border-radius:50%;object-fit:cover;border:3px solid var(--border);box-shadow:0 4px 14px rgba(0,0,0,0.4);">`;
+    const esc1url = escudos[equipo1] || ESCUDO_DEFAULT;
+    const esc2url = escudos[equipo2] || ESCUDO_DEFAULT;
 
-    // Donut SVG
-    const r = 48, cx = 60, cy = 60, circum = 2 * Math.PI * r;
+    const r = 44, cx = 54, cy = 54, circum = 2 * Math.PI * r;
     const gap = 5;
     let donutSegments = "";
     if(totalVotos === 0){
-        donutSegments = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--border)" stroke-width="14"/>`;
+        donutSegments = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--border)" stroke-width="12"/>`;
     } else {
         const dash1 = Math.max((pctE1 / 100) * circum - gap, 0);
         const dash2 = Math.max((pctE2 / 100) * circum - gap, 0);
-        donutSegments = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#2563eb" stroke-width="14"
-                stroke-dasharray="${dash1} ${circum - dash1}" stroke-dashoffset="${circum * 0.25}" stroke-linecap="round"/>`;
+        donutSegments = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#2563eb" stroke-width="12"
+            stroke-dasharray="${dash1} ${circum-dash1}" stroke-dashoffset="${circum*0.25}" stroke-linecap="round"/>`;
         if(pctE2 > 0){
-            donutSegments += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#dc2626" stroke-width="14"
-                stroke-dasharray="${dash2} ${circum - dash2}" stroke-dashoffset="${circum * 0.25 - dash1 - gap}" stroke-linecap="round"/>`;
+            donutSegments += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#dc2626" stroke-width="12"
+                stroke-dasharray="${dash2} ${circum-dash2}" stroke-dashoffset="${circum*0.25-dash1-gap}" stroke-linecap="round"/>`;
         }
     }
-    const donutSVG = `
-    <svg width="120" height="120" viewBox="0 0 120 120">
+    const donutSVG = `<svg width="108" height="108" viewBox="0 0 108 108">
         ${donutSegments}
-        <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="20" font-weight="900" fill="var(--text)" font-family="Arial,sans-serif">${totalVotos}</text>
-        <text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="10" fill="var(--text-muted)" font-family="Arial,sans-serif">voto${totalVotos!==1?"s":""}</text>
+        <text x="${cx}" y="${cy-3}" text-anchor="middle" font-size="18" font-weight="900" fill="var(--text)" font-family="Arial,sans-serif">${totalVotos}</text>
+        <text x="${cx}" y="${cy+13}" text-anchor="middle" font-size="10" fill="var(--text-muted)" font-family="Arial,sans-serif">voto${totalVotos!==1?"s":""}</text>
     </svg>`;
 
-    // Top predicciones
-    const resultados = (data.resultados || []).slice().sort((a,b) => b.count - a.count).slice(0, 5);
-    let topHTML = "";
-    if(resultados.length === 0){
-        topHTML = `<div style="font-size:12px;opacity:0.4;text-align:center;padding-top:8px;">Sin predicciones aún</div>`;
-    } else {
-        topHTML = resultados.map((r, i) => {
-            const pct = totalVotos > 0 ? Math.round(r.count / totalVotos * 100) : 0;
-            const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i+1}.`;
-            const esc1 = `<img src="${escudos[data.equipo1]||ESCUDO_DEFAULT}" style="width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid var(--border);flex-shrink:0;">`;
-            const esc2 = `<img src="${escudos[data.equipo2]||ESCUDO_DEFAULT}" style="width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid var(--border);flex-shrink:0;">`;
-            const penTag = r.penales ? `<span style="font-size:9px;opacity:0.5;margin-left:2px;">pen</span>` : '';
-            return `<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:var(--bg-elevated);margin-bottom:5px;">
-                <span style="font-size:13px;width:18px;text-align:center;">${medal}</span>
-                <div style="display:flex;align-items:center;gap:5px;flex:1;justify-content:center;">
-                    ${esc1}
-                    <span style="font-size:14px;font-weight:bold;">${r.g1}</span>
-                    <span style="opacity:0.4;font-size:12px;">–</span>
-                    <span style="font-size:14px;font-weight:bold;">${r.g2}</span>
-                    ${esc2}
-                    ${penTag}
+    const resultados = (data.resultados||[]).slice().sort((a,b)=>b.count-a.count).slice(0,5);
+    const topHTML = resultados.length === 0
+        ? `<div style="font-size:12px;opacity:0.4;text-align:center;padding:8px 0;">Sin predicciones aún</div>`
+        : resultados.map((res,i) => {
+            const pct = totalVotos > 0 ? Math.round(res.count/totalVotos*100) : 0;
+            const medal = i===0?"🥇":i===1?"🥈":i===2?"🥉":`${i+1}.`;
+            return `<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:var(--bg-elevated);margin-bottom:4px;">
+                <span style="font-size:12px;width:18px;">${medal}</span>
+                <div style="display:flex;align-items:center;gap:4px;flex:1;justify-content:center;">
+                    <img src="${esc1url}" style="width:16px;height:16px;border-radius:50%;object-fit:cover;">
+                    <span style="font-size:14px;font-weight:bold;">${res.g1}</span>
+                    <span style="opacity:0.4;font-size:11px;">–</span>
+                    <span style="font-size:14px;font-weight:bold;">${res.g2}</span>
+                    <img src="${esc2url}" style="width:16px;height:16px;border-radius:50%;object-fit:cover;">
+                    ${res.penales?`<span style="font-size:9px;opacity:0.5;">pen</span>`:''}
                 </div>
-                <span style="font-size:11px;opacity:0.55;width:30px;text-align:right;">${pct}%</span>
+                <span style="font-size:11px;opacity:0.55;width:28px;text-align:right;">${pct}%</span>
             </div>`;
         }).join("");
-    }
 
     let formulario = "";
     if(!yaVoto){
         formulario = `
         <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
             <div style="display:flex;align-items:center;gap:8px;">
-                <input id="pred_g1" type="number" min="0" max="99" placeholder="0" oninput="checkEmpatePrediccion('${data.equipo1}','${data.equipo2}')" style="width:52px;height:48px;padding:0;text-align:center;font-size:22px;font-weight:bold;border-radius:10px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text);">
+                <input id="pred_g1" type="number" min="0" max="99" placeholder="0"
+                    oninput="window._checkEmpate('${equipo1}','${equipo2}')"
+                    style="width:52px;height:48px;padding:0;text-align:center;font-size:22px;font-weight:bold;border-radius:10px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text);">
                 <span style="font-size:22px;font-weight:900;opacity:0.4;">–</span>
-                <input id="pred_g2" type="number" min="0" max="99" placeholder="0" oninput="checkEmpatePrediccion('${data.equipo1}','${data.equipo2}')" style="width:52px;height:48px;padding:0;text-align:center;font-size:22px;font-weight:bold;border-radius:10px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text);">
+                <input id="pred_g2" type="number" min="0" max="99" placeholder="0"
+                    oninput="window._checkEmpate('${equipo1}','${equipo2}')"
+                    style="width:52px;height:48px;padding:0;text-align:center;font-size:22px;font-weight:bold;border-radius:10px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text);">
             </div>
             <div style="font-size:10px;opacity:0.4;text-transform:uppercase;letter-spacing:0.08em;">Tu predicción</div>
             <div id="pred_penales_selector" style="display:none;text-align:center;">
                 <div style="font-size:11px;opacity:0.55;margin-bottom:4px;">¿Quién gana en penales?</div>
                 <div style="display:flex;gap:6px;justify-content:center;">
-                    <button onclick="setPenalGanador('${data.equipo1}')" id="pred_pen_e1" style="padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text);cursor:pointer;font-weight:600;font-size:11px;">${data.equipo1}</button>
-                    <button onclick="setPenalGanador('${data.equipo2}')" id="pred_pen_e2" style="padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text);cursor:pointer;font-weight:600;font-size:11px;">${data.equipo2}</button>
+                    <button id="pred_pen_e1" onclick="window._setPenal('${equipo1}')"
+                        style="padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text);cursor:pointer;font-weight:600;font-size:11px;">${equipo1}</button>
+                    <button id="pred_pen_e2" onclick="window._setPenal('${equipo2}')"
+                        style="padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text);cursor:pointer;font-weight:600;font-size:11px;">${equipo2}</button>
                 </div>
             </div>
-            <button onclick="enviarPrediccion('${data.partidoId}','${data.equipo1}','${data.equipo2}')" style="background:#2563eb;color:white;border:none;padding:8px 22px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:13px;">Votar</button>
+            <button onclick="window._enviarPred('${partidoId}','${equipo1}','${equipo2}')"
+                style="background:#2563eb;color:white;border:none;padding:8px 22px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:13px;">Votar</button>
         </div>`;
-        // Pre-rellenar si viene de edición
-        if(prevValues){
-            requestAnimationFrame(() => {
-                const i1 = document.getElementById("pred_g1");
-                const i2 = document.getElementById("pred_g2");
-                if(i1 && prevValues.g1 !== undefined) i1.value = prevValues.g1;
-                if(i2 && prevValues.g2 !== undefined) i2.value = prevValues.g2;
-            });
-        }
     } else {
         const miPred = JSON.parse(yaVoto);
         formulario = `
         <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-            <div style="font-size:13px;opacity:0.6;">✅ Votaste: <strong>${miPred.g1} – ${miPred.g2}${miPred.penales ? ' <span style=\"font-size:11px;\">(pen: '+miPred.penales+')</span>' : ''}</strong></div>
-            <button onclick="editarPrediccion('${data.partidoId}','${data.equipo1}','${data.equipo2}')" style="background:transparent;color:var(--text);border:1px solid var(--border);padding:5px 14px;border-radius:8px;font-size:12px;cursor:pointer;opacity:0.7;">✏️ Cambiar predicción</button>
+            <div style="font-size:13px;opacity:0.6;">✅ Votaste: <strong>${miPred.g1} – ${miPred.g2}${miPred.penales?' (pen: '+miPred.penales+')':''}</strong></div>
+            <button onclick="window._editarPred('${partidoId}','${equipo1}','${equipo2}')"
+                style="background:transparent;color:var(--text);border:1px solid var(--border);padding:5px 14px;border-radius:8px;font-size:12px;cursor:pointer;opacity:0.7;">✏️ Cambiar predicción</button>
         </div>`;
     }
 
-    sec.innerHTML = `
-    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:10px 18px 14px;">
-        <div style="font-size:14px;font-weight:800;opacity:0.65;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px;">⚽ Partido de la semana</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;gap:16px;">
+    document.getElementById("contenidoPrediccion").innerHTML = `
+    <div style="padding:20px 20px 0;">
+        <h3 style="margin:0 0 14px 0;font-size:15px;font-weight:800;opacity:0.65;text-transform:uppercase;letter-spacing:0.12em;text-align:center;">🔮 Predicción</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-items:center;">
 
-            <!-- Columna 1: Escudos + formulario -->
+            <!-- Izquierda: más votadas -->
+            <div>
+                <div style="font-size:11px;opacity:0.45;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;text-align:center;">Más votadas</div>
+                ${topHTML}
+            </div>
+
+            <!-- Centro: escudos + formulario -->
             <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
-                <div style="display:flex;align-items:center;gap:14px;">
+                <div style="display:flex;align-items:center;gap:12px;">
                     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                        ${escudo1}
-                        <span style="font-weight:bold;font-size:12px;text-align:center;">${data.equipo1}</span>
+                        <img src="${esc1url}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid var(--border);">
+                        <span style="font-size:12px;font-weight:bold;text-align:center;">${equipo1}</span>
                     </div>
-                    <div style="font-size:18px;font-weight:900;opacity:0.25;">vs</div>
+                    <span style="font-size:18px;font-weight:900;opacity:0.25;">vs</span>
                     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                        ${escudo2}
-                        <span style="font-weight:bold;font-size:12px;text-align:center;">${data.equipo2}</span>
+                        <img src="${esc2url}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid var(--border);">
+                        <span style="font-size:12px;font-weight:bold;text-align:center;">${equipo2}</span>
                     </div>
                 </div>
                 ${formulario}
             </div>
 
-            <!-- Columna 2: Donut -->
-            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <!-- Derecha: donut con escudos en vez de nombres -->
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
                 ${donutSVG}
-                <div style="display:flex;gap:10px;font-size:11px;">
-                    <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:#2563eb;display:inline-block;"></span>${data.equipo1} <strong>${pctE1}%</strong></span>
-                    <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:#dc2626;display:inline-block;"></span>${data.equipo2} <strong>${pctE2}%</strong></span>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <div style="display:flex;align-items:center;gap:4px;">
+                        <img src="${esc1url}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #2563eb;">
+                        <span style="font-size:13px;font-weight:bold;">${pctE1}%</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:4px;">
+                        <img src="${esc2url}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #dc2626;">
+                        <span style="font-size:13px;font-weight:bold;">${pctE2}%</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Columna 3: Top predicciones -->
-            <div style="display:flex;flex-direction:column;gap:2px;">
-                <div style="font-size:11px;opacity:0.45;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;text-align:center;">Más votadas</div>
-                ${topHTML}
-            </div>
-
         </div>
-    </div>`;
+    </div>
+    <button onclick="cerrarModalAnimado('modalPrediccion')" style="width:100%;margin-top:14px;background:var(--bg-elevated);border:none;border-top:1px solid var(--border);color:var(--text);padding:12px;border-radius:0 0 16px 16px;font-size:13px;cursor:pointer;">Cerrar</button>`;
+
+    window._currentPredRef = refPred;
+    window._currentPredData = { partidoId, equipo1, equipo2 };
 }
 
 let _predPenalGanador = null;
 
-window.checkEmpatePrediccion = function(equipo1, equipo2){
+window._checkEmpate = function(equipo1, equipo2){
     const g1 = parseInt(document.getElementById("pred_g1")?.value);
     const g2 = parseInt(document.getElementById("pred_g2")?.value);
     const sel = document.getElementById("pred_penales_selector");
-    if(sel){
-        if(!isNaN(g1) && !isNaN(g2) && g1 === g2){
-            sel.style.display = "block";
-        } else {
-            sel.style.display = "none";
-            _predPenalGanador = null;
-            const b1 = document.getElementById("pred_pen_e1");
-            const b2 = document.getElementById("pred_pen_e2");
-            if(b1) b1.style.background = "var(--bg-elevated)";
-            if(b2) b2.style.background = "var(--bg-elevated)";
-        }
+    if(!sel) return;
+    if(!isNaN(g1) && !isNaN(g2) && g1 === g2){
+        sel.style.display = "block";
+    } else {
+        sel.style.display = "none";
+        _predPenalGanador = null;
+        const b1 = document.getElementById("pred_pen_e1");
+        const b2 = document.getElementById("pred_pen_e2");
+        if(b1) b1.style.background = "var(--bg-elevated)";
+        if(b2) b2.style.background = "var(--bg-elevated)";
     }
 };
 
-window.setPenalGanador = function(equipo){
+window._setPenal = function(equipo){
     _predPenalGanador = equipo;
     const b1 = document.getElementById("pred_pen_e1");
     const b2 = document.getElementById("pred_pen_e2");
@@ -2762,107 +2702,84 @@ window.setPenalGanador = function(equipo){
     if(b2) b2.style.background = b2.textContent.trim() === equipo ? "#2563eb" : "var(--bg-elevated)";
 };
 
-window.editarPrediccion = function(partidoId, equipo1, equipo2){
-    // Borrar voto del localStorage para permitir re-votar
-    // El voto anterior se descuenta en enviarPrediccion
+window._editarPred = function(partidoId, equipo1, equipo2){
     const prev = localStorage.getItem("pred_" + partidoId);
     if(prev) window._predAnterior = { ...JSON.parse(prev), partidoId, equipo1, equipo2 };
     localStorage.removeItem("pred_" + partidoId);
-    // Re-renderizar mostrando el formulario con valores previos
-    const snap = window._lastPredSnap;
-    if(snap) renderPrediccion(snap, { g1: JSON.parse(prev||"{}").g1, g2: JSON.parse(prev||"{}").g2 });
+    if(window._currentPredRef && window._currentPredData){
+        getDoc(window._currentPredRef).then(snap => {
+            const data = snap.exists() ? snap.data() : { votosE1:0, votosE2:0, resultados:[] };
+            renderModalPrediccion(data, partidoId, equipo1, equipo2, window._currentPredRef);
+            const prev2 = window._predAnterior;
+            if(prev2){
+                requestAnimationFrame(() => {
+                    const i1 = document.getElementById("pred_g1");
+                    const i2 = document.getElementById("pred_g2");
+                    if(i1) i1.value = prev2.g1;
+                    if(i2) i2.value = prev2.g2;
+                });
+            }
+        });
+    }
 };
 
-window.enviarPrediccion = async function(partidoId, equipo1, equipo2){
-    // Solo bloquear si ya votó Y no viene de una edición
+window._enviarPred = async function(partidoId, equipo1, equipo2){
     if(localStorage.getItem("pred_" + partidoId) && !window._predAnterior){
-        alert("Ya votaste en esta predicción.");
-        return;
+        alert("Ya votaste en esta predicción."); return;
     }
     const g1 = parseInt(document.getElementById("pred_g1")?.value);
     const g2 = parseInt(document.getElementById("pred_g2")?.value);
     if(isNaN(g1) || isNaN(g2)){ alert("Ingresa un resultado válido"); return; }
 
     let ganaEquipo;
-    if(g1 > g2){
-        ganaEquipo = equipo1;
-    } else if(g2 > g1){
-        ganaEquipo = equipo2;
-    } else {
+    if(g1 > g2) ganaEquipo = equipo1;
+    else if(g2 > g1) ganaEquipo = equipo2;
+    else {
         if(!_predPenalGanador) return;
         ganaEquipo = _predPenalGanador;
     }
 
     const ganaE1 = ganaEquipo === equipo1;
-    try {
-        const snap = await getDoc(refPrediccion);
-        const data = snap.exists() ? snap.data() : { votosE1:0, votosE2:0, resultados:[] };
-        let resultados = data.resultados || [];
-        let nuevoVotosE1 = data.votosE1 || 0;
-        let nuevoVotosE2 = data.votosE2 || 0;
+    const refPred = window._currentPredRef;
+    if(!refPred) return;
 
-        // Si viene de edición, descontar el voto anterior
+    try {
+        const snap = await getDoc(refPred);
+        const data = snap.exists() ? snap.data() : { votosE1:0, votosE2:0, resultados:[], equipo1, equipo2, partidoId };
+        let resultados = data.resultados || [];
+        let v1 = data.votosE1 || 0;
+        let v2 = data.votosE2 || 0;
+
         const prev = window._predAnterior;
         if(prev && prev.partidoId === partidoId){
-            const claveAnterior = `${prev.g1}-${prev.g2}${prev.penales ? '_pen_'+prev.penales : ''}`;
-            const prevGanaE1 = prev.g1 > prev.g2 ? true : prev.g2 > prev.g1 ? false : prev.penales === equipo1;
-            const idxPrev = resultados.findIndex(r => r.clave === claveAnterior);
-            if(idxPrev >= 0){
-                resultados[idxPrev].count = Math.max(0, resultados[idxPrev].count - 1);
-                if(resultados[idxPrev].count === 0) resultados.splice(idxPrev, 1);
+            const claveAnt = `${prev.g1}-${prev.g2}${prev.penales?'_pen_'+prev.penales:''}`;
+            const prevG1 = prev.g1 > prev.g2 ? true : prev.g2 > prev.g1 ? false : prev.penales === equipo1;
+            const idxP = resultados.findIndex(r => r.clave === claveAnt);
+            if(idxP >= 0){
+                resultados[idxP].count = Math.max(0, resultados[idxP].count - 1);
+                if(resultados[idxP].count === 0) resultados.splice(idxP, 1);
             }
-            nuevoVotosE1 = Math.max(0, nuevoVotosE1 - (prevGanaE1 ? 1 : 0));
-            nuevoVotosE2 = Math.max(0, nuevoVotosE2 - (!prevGanaE1 ? 1 : 0));
+            v1 = Math.max(0, v1 - (prevG1 ? 1 : 0));
+            v2 = Math.max(0, v2 - (!prevG1 ? 1 : 0));
             window._predAnterior = null;
         }
 
-        // Sumar nuevo voto
-        const clave = `${g1}-${g2}${_predPenalGanador ? '_pen_'+_predPenalGanador : ''}`;
+        const clave = `${g1}-${g2}${_predPenalGanador?'_pen_'+_predPenalGanador:''}`;
         const idx = resultados.findIndex(r => r.clave === clave);
         if(idx >= 0) resultados[idx].count++;
-        else resultados.push({ clave, g1, g2, penales: _predPenalGanador || null, count: 1 });
-        await setDoc(refPrediccion, {
-            ...data,
-            votosE1: nuevoVotosE1 + (ganaE1 ? 1 : 0),
-            votosE2: nuevoVotosE2 + (!ganaE1 ? 1 : 0),
-            resultados,
-        });
+        else resultados.push({ clave, g1, g2, penales: _predPenalGanador||null, count: 1 });
+
+        await setDoc(refPred, { ...data, votosE1: v1+(ganaE1?1:0), votosE2: v2+(!ganaE1?1:0), resultados });
         localStorage.setItem("pred_" + partidoId, JSON.stringify({ g1, g2, penales: _predPenalGanador }));
         _predPenalGanador = null;
-        // Re-renderizar inmediatamente sin esperar snapshot
-        const snapActual = await getDoc(refPrediccion);
-        if(snapActual.exists()) renderPrediccion(snapActual.data());
+
+        const snapActual = await getDoc(refPred);
+        if(snapActual.exists()) renderModalPrediccion(snapActual.data(), partidoId, equipo1, equipo2, refPred);
     } catch(e){ console.error(e); alert("Error al votar"); }
 };
 
-// ── Admin: activar predicción ──────────────────────────────────────────
-window.activarPrediccion = async function(index){
-    const p = partidos[index];
-    if(!p) return;
-    if(!p.programado && p.g1 !== null && p.g1 !== undefined){
-        alert("Solo puedes activar predicciones para partidos que aún no se han jugado.");
-        return;
-    }
-    const partidoId = `${p.equipo1}_${p.equipo2}_${p.fecha}_${Date.now()}`.replace(/\s/g,"_");
-    await setDoc(refPrediccion, {
-        activo: true,
-        partidoId,
-        equipo1: p.equipo1,
-        equipo2: p.equipo2,
-        votosE1: 0,
-        votosE2: 0,
-        resultados: [],
-        adminToken: ADMIN_TOKEN
-    });
-    alert(`Predicción activada para ${p.equipo1} vs ${p.equipo2}`);
-};
 
-window.desactivarPrediccion = async function(){
-    const snap = await getDoc(refPrediccion);
-    if(snap.exists()){
-        await setDoc(refPrediccion, { ...snap.data(), activo: false });
-    }
-};
+
 
 
 function escucharVisitas(){
@@ -2874,17 +2791,6 @@ function escucharVisitas(){
 
         const porFecha = pf || {};
         const hoy = new Date().toLocaleDateString("es-CL");
-
-        const diasRows = Object.entries(porFecha)
-            .sort((a,b) => {
-                const toISO = f => f.split("-").reverse().join("-");
-                return toISO(b[0]).localeCompare(toISO(a[0]));
-            })
-            .slice(0, 7)
-            .map(([f, c]) => `
-            <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg-base);border-radius:8px;font-size:13px;color:var(--text);">
-                <span>${f}</span><span style="font-weight:bold;">${c} visita${c>1?"s":""}</span>
-            </div>`).join("");
 
         el.innerHTML = `
         <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
@@ -2907,7 +2813,6 @@ window.activarVista = function(){
     actualizarMVPs();
 };
 
-// Hash SHA-256 de "altamarino" — la contraseña real nunca está en el código
 const ADMIN_HASH = "e592727197f51f1e4ad79ac893c31c0d252a8e946e7f763e74dda472e4acbcf0";
 
 async function hashStr(str){
@@ -2955,7 +2860,6 @@ window.submitAdminPass = async function(){
         actualizarMVPs();
         cerrarModalAdmin();
     } else {
-        // Temblor + mensaje de error
         input.classList.add("error");
         errMsg.textContent = "⚠️ Contraseña incorrecta";
         box.classList.remove("shake");
@@ -2970,18 +2874,15 @@ window.submitAdminPass = async function(){
     }
 };
 
-
-// ── Animación de modales ───────────────────────────────────────────
 function abrirModal(id){
     const modal = document.getElementById(id);
     if(!modal) return;
     modal.style.display = "block";
-    // forzar reflow para que la transición CSS arranque
     void modal.offsetWidth;
     modal.classList.add("abierto");
 }
 
-function cerrarModalAnimado(id){
+window.cerrarModalAnimado = function cerrarModalAnimado(id){
     const modal = document.getElementById(id);
     if(!modal) return;
     modal.classList.remove("abierto");
@@ -2990,7 +2891,6 @@ function cerrarModalAnimado(id){
     }, 280);
 }
 
-// ── Modo claro / oscuro ───────────────────────────────────────────
 window.toggleModoColor = function(){
     const esClaro = document.body.classList.contains("light");
     if(esClaro){
@@ -3003,7 +2903,6 @@ window.toggleModoColor = function(){
         localStorage.setItem("copaTema", "light");
     }
     actualizarBotonTema();
-    // actualizar colores de tabs
     actualizarTabsColor();
 };
 
@@ -3016,11 +2915,9 @@ function actualizarBotonTema(){
 }
 
 function actualizarTabsColor(){
-    // Forzar re-render del color de texto en tabs de historial
     document.querySelectorAll(".fecha-tab").forEach(el => {
         el.style.color = "var(--text)";
     });
-    // Tab buttons dentro de modales
     const tabP = document.getElementById("tabPartidosBtn");
     const tabPl = document.getElementById("tabPlantillaBtn");
     const tabG = document.getElementById("tabGoleadoresBtn");
@@ -3032,10 +2929,7 @@ function actualizarTabsColor(){
     });
 }
 
-// Aplicar estado inicial del botón — esperar a que el DOM esté listo
-// ── Bracket connector dinámico ────────────────────────────────────
 function dibujarConectorBracket(tipo){
-    // Doble rAF: primero el DOM se pinta, luego se mide
     requestAnimationFrame(() => requestAnimationFrame(() => {
         const canvas    = document.getElementById("bracketCanvas_"   + tipo);
         const connector = document.getElementById("bracketConnector_"+ tipo);
@@ -3047,7 +2941,6 @@ function dibujarConectorBracket(tipo){
         const H = connector.offsetHeight;
         if(H === 0) return;
 
-        // Ajustar el canvas a píxeles reales (evitar blur por devicePixelRatio)
         const dpr = window.devicePixelRatio || 1;
         canvas.width  = 60 * dpr;
         canvas.height = H  * dpr;
@@ -3058,10 +2951,8 @@ function dibujarConectorBracket(tipo){
         ctx.scale(dpr, dpr);
         ctx.clearRect(0, 0, 60, H);
 
-        // Posición del conector respecto a la página
         const connY = connector.getBoundingClientRect().top + window.scrollY;
 
-        // Centro vertical de SF1 y SF2 (mitad del grupo completo incluyendo label)
         const sf1Rect = sf1.getBoundingClientRect();
         const sf2Rect = sf2.getBoundingClientRect();
         const finRect = finalCol.getBoundingClientRect();
@@ -3078,16 +2969,12 @@ function dibujarConectorBracket(tipo){
         ctx.lineJoin    = "round";
 
         ctx.beginPath();
-        // SF1 → punto medio horizontal
         ctx.moveTo(0, ySF1);
         ctx.lineTo(30, ySF1);
-        // Vertical SF1 → SF2
         ctx.lineTo(30, ySF2);
-        // SF2 → punto medio horizontal (cierra el bracket)
         ctx.lineTo(0, ySF2);
         ctx.stroke();
 
-        // Línea del centro del bracket hacia la final
         ctx.beginPath();
         ctx.moveTo(30, yMid);
         ctx.lineTo(60, yFin);
@@ -3095,7 +2982,6 @@ function dibujarConectorBracket(tipo){
     }));
 }
 
-// Redibujar al cambiar tema (el color de la línea cambia)
 const _origToggle = window.toggleModoColor;
 window.toggleModoColor = function(){
     _origToggle();
@@ -3105,7 +2991,6 @@ window.toggleModoColor = function(){
 document.addEventListener("DOMContentLoaded", actualizarBotonTema);
 
 iniciarEquipos();
-llenarSelects();
 renderFechasTabs();
 activarVista();
 escucharCambios();
@@ -3113,7 +2998,6 @@ escucharTrofeo();
 escucharFotos();
 registrarVisita();
 escucharVisitas();
-escucharPrediccion();
 
 </script>
 
