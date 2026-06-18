@@ -1229,14 +1229,7 @@ window.verHistorialEquipo = function(nombre){
             ? `<div style="text-align:center; margin-top:8px;"><span style="font-size:11px; background:#78350f; color:#fcd34d; padding:4px 12px; border-radius:20px; font-weight:bold;">🌟 MVP: ${p.mvp.jugador} <span style="opacity:0.7;">(${p.mvp.equipo})</span></span></div>`
             : "";
 
-        const tarjetasTag = (p.tarjetas && p.tarjetas.length > 0)
-            ? `<div style="display:flex; flex-wrap:wrap; gap:4px; justify-content:center; margin-top:6px;">
-                ${p.tarjetas.map(t => {
-                    const emoji = t.tipo === "roja" ? "🟥" : "🟨";
-                    return `<span style="font-size:11px; background:var(--bg-elevated); border:1px solid var(--border); padding:3px 10px; border-radius:20px;">${emoji} ${t.jugador} <span style="opacity:0.6;">(${t.equipo})</span></span>`;
-                }).join("")}
-               </div>`
-            : "";
+        const tarjetasTag = "";
 
         contenedor.innerHTML += `
         <div class="partido-historial" onclick="toggleGolesHistorial('${divId}')">
@@ -1263,16 +1256,17 @@ window.verHistorialEquipo = function(nombre){
             </div>
 
             ${mvpTag}
-            ${tarjetasTag}
             <div class="goles-detalle" id="${divId}">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:4px;">
                     <div>
                         <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; opacity:0.5; margin-bottom:8px;">${p.equipo1}</div>
                         ${golesIzqH}
+                        ${p.tarjetas && p.tarjetas.filter(t=>t.equipo===p.equipo1).length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">${p.tarjetas.filter(t=>t.equipo===p.equipo1).map(t=>{const e=t.tipo==="roja"?"🟥":t.tipo==="doble_amarilla"?"🟨🟨":"🟨";return `<span style="font-size:11px;background:var(--bg-elevated);border:1px solid var(--border);padding:3px 8px;border-radius:20px;">${e} ${t.jugador}</span>`;}).join("")}</div>` : ""}
                     </div>
                     <div>
                         <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; opacity:0.5; margin-bottom:8px; text-align:right;">${p.equipo2}</div>
                         ${golesDerH}
+                        ${p.tarjetas && p.tarjetas.filter(t=>t.equipo===p.equipo2).length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;justify-content:flex-end;">${p.tarjetas.filter(t=>t.equipo===p.equipo2).map(t=>{const e=t.tipo==="roja"?"🟥":t.tipo==="doble_amarilla"?"🟨🟨":"🟨";return `<span style="font-size:11px;background:var(--bg-elevated);border:1px solid var(--border);padding:3px 8px;border-radius:20px;">${e} ${t.jugador}</span>`;}).join("")}</div>` : ""}
                     </div>
                 </div>
             </div>
@@ -1344,7 +1338,7 @@ function renderPlantilla(nombre){
         if(!p.tarjetas) return;
         p.tarjetas.forEach(t => {
             if(t.equipo !== nombre) return;
-            if(t.tipo === "roja"){
+            if(t.tipo === "roja" || t.tipo === "doble_amarilla"){
                 rojasJugador[t.jugador] = (rojasJugador[t.jugador] || 0) + 1;
             } else {
                 amarillasJugador[t.jugador] = (amarillasJugador[t.jugador] || 0) + 1;
@@ -1624,25 +1618,21 @@ function actualizarHistorial(){
 
                 <div style="height:4px; background:repeating-linear-gradient(90deg,#3b82f6 0,#3b82f6 8px,transparent 8px,transparent 14px); border-radius:16px 16px 0 0; opacity:0.5;"></div>
 
-                <div style="display:flex; align-items:center; padding:14px 12px 10px;">
+                <div style="display:flex; align-items:flex-end; padding:14px 12px 10px;">
 
                     <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;">
-                        <div style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;">
-                            <img src="${escudos[p.equipo1] || ESCUDO_DEFAULT}" class="escudo">
-                        </div>
                         <span style="font-size:12px; font-weight:600; min-height:32px; display:flex; align-items:center; justify-content:center;">${p.equipo1}</span>
+                        <img src="${escudos[p.equipo1] || ESCUDO_DEFAULT}" class="escudo">
                     </div>
 
-                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 10px; gap:2px; min-width:80px;">
+                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 10px 8px; gap:2px; min-width:80px;">
                         <div style="font-size:15px; font-weight:800; color:var(--text-muted); letter-spacing:1px;">${centroTop}</div>
                         ${centroBot ? `<div style="font-size:18px; font-weight:900; color:#60a5fa;">${centroBot}</div>` : ""}
                     </div>
 
                     <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;">
-                        <div style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;">
-                            <img src="${escudos[p.equipo2] || ESCUDO_DEFAULT}" class="escudo">
-                        </div>
                         <span style="font-size:12px; font-weight:600; min-height:32px; display:flex; align-items:center; justify-content:center;">${p.equipo2}</span>
+                        <img src="${escudos[p.equipo2] || ESCUDO_DEFAULT}" class="escudo">
                     </div>
 
                 </div>
@@ -1995,7 +1985,7 @@ window.editarPartido = function(index){
             if(!lista.length) return `<p style="font-size:12px; opacity:0.4; margin:6px 0 10px 0;">Sin tarjetas</p>`;
             return lista.map((t, ti) => {
                 const realIdx = (p.tarjetas||[]).findIndex((x) => x === t);
-                const emoji = t.tipo === "roja" ? "🟥" : "🟨";
+                const emoji = t.tipo === "roja" ? "🟥" : t.tipo === "doble_amarilla" ? "🟨🟨" : "🟨";
                 return `
                 <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-deep); padding:8px 12px; border-radius:8px; margin-bottom:6px;">
                     <span style="font-size:13px;">${emoji} ${t.jugador}</span>
@@ -2029,6 +2019,7 @@ window.editarPartido = function(index){
                     <select id="tarjTipo_${eq.replace(/[^a-z0-9]/gi,"")}"
                         style="width:110px; padding:7px; border:none; border-radius:8px; font-size:12px; ${bgInput};">
                         <option value="amarilla">🟨 Amarilla</option>
+                        <option value="doble_amarilla">🟨🟨 Doble Amarilla</option>
                         <option value="roja">🟥 Roja</option>
                     </select>
                     <button onclick="agregarTarjetaColumna(${index}, '${eq}')"
@@ -2383,24 +2374,17 @@ window.verGoles = function(index){
         <span style="font-size:12px; background:#78350f; color:#fcd34d; padding:5px 14px; border-radius:20px; font-weight:bold;">🌟 MVP: ${p.mvp.jugador} <span style="opacity:0.7; font-size:11px;">(${p.mvp.equipo})</span></span>
     </div>` : ""}
 
-    <!-- Tarjetas del partido -->
-    ${p.tarjetas && p.tarjetas.length > 0 ? `
-    <div style="text-align:center; margin-bottom:16px; display:flex; flex-wrap:wrap; gap:6px; justify-content:center;">
-        ${p.tarjetas.map(t => {
-            const emoji = t.tipo === "roja" ? "🟥" : "🟨";
-            return `<span style="font-size:12px; background:var(--bg-elevated); border:1px solid var(--border); padding:4px 12px; border-radius:20px;">${emoji} ${t.jugador} <span style="opacity:0.6; font-size:11px;">(${t.equipo})</span></span>`;
-        }).join("")}
-    </div>` : ""}
-
-    <!-- Columnas de goles -->
+    <!-- Columnas de goles + tarjetas -->
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
         <div>
             <div style="font-size:12px; text-transform:uppercase; letter-spacing:0.1em; opacity:0.5; margin-bottom:10px;">${p.equipo1}</div>
             ${golesIzq}
+            ${p.tarjetas && p.tarjetas.filter(t => t.equipo === p.equipo1).length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;">${p.tarjetas.filter(t=>t.equipo===p.equipo1).map(t=>{const e=t.tipo==="roja"?"🟥":t.tipo==="doble_amarilla"?"🟨🟨":"🟨";return `<span style="font-size:12px;background:var(--bg-elevated);border:1px solid var(--border);padding:4px 10px;border-radius:20px;">${e} ${t.jugador}</span>`;}).join("")}</div>` : ""}
         </div>
         <div>
             <div style="font-size:12px; text-transform:uppercase; letter-spacing:0.1em; opacity:0.5; margin-bottom:10px; text-align:right;">${p.equipo2}</div>
             ${golesDer}
+            ${p.tarjetas && p.tarjetas.filter(t => t.equipo === p.equipo2).length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;justify-content:flex-end;">${p.tarjetas.filter(t=>t.equipo===p.equipo2).map(t=>{const e=t.tipo==="roja"?"🟥":t.tipo==="doble_amarilla"?"🟨🟨":"🟨";return `<span style="font-size:12px;background:var(--bg-elevated);border:1px solid var(--border);padding:4px 10px;border-radius:20px;">${e} ${t.jugador}</span>`;}).join("")}</div>` : ""}
         </div>
     </div>`;
 
