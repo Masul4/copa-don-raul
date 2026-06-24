@@ -87,6 +87,9 @@ html.light body, body.light {
     --silver-soft: rgba(100,116,139,0.20);
 }
 
+
+
+
 *{
     box-sizing:border-box;
     user-select: none;
@@ -2121,16 +2124,21 @@ window.editarPartido = function(index){
     const fechaHoraHTML = !tienResultado ? `
     <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:20px;">
         <h4 style="margin:0 0 12px 0; font-size:14px; opacity:0.8;">📅 Fecha y hora del partido</h4>
-        <div style="display:flex; gap:8px;">
-            <input type="date" id="edit_fechaProg" value="${p.fechaPartido||''}" style="flex:1; padding:10px; border:none; border-radius:8px; ${bgInput};">
-            <input type="time" id="edit_horaProg"  value="${p.horaPartido||''}"  style="width:130px; padding:10px; border:none; border-radius:8px; ${bgInput};">
+        <div style="display:flex; gap:8px; align-items:center;">
+            <input type="number" id="edit_diaProg" min="1" max="31" placeholder="Día" value="${p.fechaPartido ? p.fechaPartido.split('-')[2] : ''}" style="width:70px; padding:10px; border:none; border-radius:8px; text-align:center; ${bgInput};">
+            <span style="opacity:0.5;">/</span>
+            <input type="number" id="edit_mesProg" min="1" max="12" placeholder="Mes" value="${p.fechaPartido ? p.fechaPartido.split('-')[1] : ''}" style="width:70px; padding:10px; border:none; border-radius:8px; text-align:center; ${bgInput};">
+            <input type="time" id="edit_horaProg"  value="${p.horaPartido||''}"  style="width:130px; padding:10px; border:none; border-radius:8px; margin-left:auto; ${bgInput};">
         </div>
     </div>` : "";
 
     const esEmpate = tienResultado && Number(p.g1) === Number(p.g2);
     const resultadoHTML = `
     <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:20px;">
-        <h4 style="margin:0 0 14px 0; font-size:14px; opacity:0.8;">🏆 Resultado</h4>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+            <h4 style="margin:0; font-size:14px; opacity:0.8;">🏆 Resultado</h4>
+            ${tienResultado ? `<button onclick="revertirAPendiente(${index})" style="background:rgba(217,119,6,0.15);color:#d97706;border:1px solid rgba(217,119,6,0.4);padding:5px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-weight:600;">↩️ Volver a pendiente</button>` : ''}
+        </div>
         <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:12px;">
             <div style="text-align:center;">
                 <div style="font-size:13px; font-weight:700; margin-bottom:8px; opacity:0.8;">${p.equipo1}</div>
@@ -2391,6 +2399,28 @@ window.borrarGolModal = async function(partidoIdx, golIdx){
     editarPartido(partidoIdx);
 };
 
+window.revertirAPendiente = async function(index){
+    if(!confirm("¿Volver este partido a pendiente? Se perderán los goles, tarjetas y MVP registrados.")) return;
+    const p = partidos[index];
+    partidos[index] = {
+        ...p,
+        programado: true,
+        g1: null, g2: null,
+        ganadorPenales: "",
+        pen1: null, pen2: null,
+        goles: [],
+        tarjetas: [],
+        mvp: null,
+        fechaPartido: p.fechaPartido || null,
+        horaPartido: p.horaPartido || null
+    };
+    await guardarDatos();
+    recalcularTabla();
+    actualizarGoleadores();
+    editando = -1;
+    cerrarModalEditar();
+};
+
 window.guardarEdicionCompleta = async function(){
     if(editando === -1) return;
     const p = partidos[editando];
@@ -2401,8 +2431,14 @@ window.guardarEdicionCompleta = async function(){
     const g2Str = g2El?.value ?? "";
 
     if(g1Str === "" || g2Str === ""){
-        const fechaProg = document.getElementById("edit_fechaProg")?.value || "";
-        const horaProg  = document.getElementById("edit_horaProg")?.value  || "";
+        const diaProg = document.getElementById("edit_diaProg")?.value || "";
+        const mesProg = document.getElementById("edit_mesProg")?.value || "";
+        const horaProg = document.getElementById("edit_horaProg")?.value || "";
+        let fechaProg = "";
+        if(diaProg && mesProg){
+            const anioActual = new Date().getFullYear();
+            fechaProg = `${anioActual}-${String(mesProg).padStart(2,"0")}-${String(diaProg).padStart(2,"0")}`;
+        }
         partidos[editando] = {
             ...p,
             programado: true,
@@ -2782,11 +2818,11 @@ function renderModalPrediccion(data, partidoId, equipo1, equipo2, refPred){
         formulario = `
         <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
             <div style="display:flex;align-items:center;gap:8px;">
-                <input id="pred_g1" type="number" min="0" max="99" placeholder="0"
+                <input id="pred_g1" type="number" min="0" max="30" placeholder="0"
                     oninput="window._checkEmpate('${equipo1}','${equipo2}')"
                     style="width:52px;height:48px;padding:0;text-align:center;font-size:22px;font-weight:bold;border-radius:10px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text);">
                 <span style="font-size:22px;font-weight:900;opacity:0.4;">–</span>
-                <input id="pred_g2" type="number" min="0" max="99" placeholder="0"
+                <input id="pred_g2" type="number" min="0" max="30" placeholder="0"
                     oninput="window._checkEmpate('${equipo1}','${equipo2}')"
                     style="width:52px;height:48px;padding:0;text-align:center;font-size:22px;font-weight:bold;border-radius:10px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text);">
             </div>
@@ -2918,6 +2954,7 @@ window._enviarPred = async function(partidoId, equipo1, equipo2){
     const g1 = parseInt(document.getElementById("pred_g1")?.value);
     const g2 = parseInt(document.getElementById("pred_g2")?.value);
     if(isNaN(g1) || isNaN(g2)){ alert("Ingresa un resultado válido"); return; }
+    if(g1 > 30 || g2 > 30 || g1 < 0 || g2 < 0){ alert("El resultado debe estar entre 0 y 30 goles"); return; }
 
     let ganaEquipo;
     if(g1 > g2) ganaEquipo = equipo1;
@@ -3187,7 +3224,83 @@ escucharFotos();
 registrarVisita();
 escucharVisitas();
 
+// ── Widget de Twitch ────────────────────────────────────────────────
+const TWITCH_CHANNEL = "alvalitrooo";
+let _twitchEnVivo = false;
+let _twitchCerradoManual = false;
+
+async function chequearTwitchEnVivo(){
+    try {
+        const res = await fetch(`https://decapi.me/twitch/uptime/${TWITCH_CHANNEL}`);
+        const texto = await res.text();
+        const enVivo = !texto.toLowerCase().includes("offline");
+
+        if(enVivo && !_twitchEnVivo){
+            _twitchEnVivo = true;
+            if(!_twitchCerradoManual) mostrarTwitchWidget();
+        } else if(!enVivo && _twitchEnVivo){
+            _twitchEnVivo = false;
+            ocultarTwitchWidget();
+        }
+    } catch(e){
+        console.warn("No se pudo verificar estado de Twitch:", e);
+    }
+}
+
+function mostrarTwitchWidget(){
+    const widget = document.getElementById("twitchWidget");
+    const container = document.getElementById("twitchPlayerContainer");
+    if(!widget || !container) return;
+    const parentDomain = window.location.hostname || "localhost";
+    container.innerHTML = `<iframe src="https://player.twitch.tv/?channel=${TWITCH_CHANNEL}&parent=${parentDomain}&muted=true" height="100%" width="100%" frameborder="0" allowfullscreen="true"></iframe>`;
+    widget.style.display = "block";
+}
+
+function ocultarTwitchWidget(){
+    const widget = document.getElementById("twitchWidget");
+    const container = document.getElementById("twitchPlayerContainer");
+    if(widget) widget.style.display = "none";
+    if(container) container.innerHTML = "";
+}
+
+window.cerrarTwitchWidget = function(){
+    _twitchCerradoManual = true;
+    ocultarTwitchWidget();
+};
+
+window.expandirTwitch = function(){
+    window.open(`https://player.twitch.tv/?channel=${TWITCH_CHANNEL}&parent=${window.location.hostname || "localhost"}`, "_blank", "width=960,height=540");
+};
+
+chequearTwitchEnVivo();
+setInterval(chequearTwitchEnVivo, 60000);
+
 </script>
+
+<!-- Widget Twitch flotante -->
+<div id="twitchWidget" style="position:fixed; bottom:16px; right:16px; z-index:500; display:none;">
+    <div id="twitchMini" style="background:var(--bg-card); border:1px solid var(--border); border-radius:14px; box-shadow:0 8px 28px rgba(0,0,0,0.5); overflow:hidden; width:280px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:#9146FF;">
+            <div style="display:flex; align-items:center; gap:6px; color:white; font-size:12px; font-weight:bold;">
+                <span style="width:7px;height:7px;border-radius:50%;background:#fff;display:inline-block;animation:pulseLive 1.4s infinite;"></span>
+                EN VIVO · alvalitrooo
+            </div>
+            <div style="display:flex; gap:4px;">
+                <button onclick="expandirTwitch()" title="Ampliar" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:3px 7px; border-radius:6px; font-size:11px; cursor:pointer;">⤢</button>
+                <button onclick="cerrarTwitchWidget()" title="Cerrar" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:3px 7px; border-radius:6px; font-size:11px; cursor:pointer;">✕</button>
+            </div>
+        </div>
+        <div id="twitchPlayerContainer" style="aspect-ratio:16/9; background:#000;"></div>
+        <a href="https://twitch.tv/alvalitrooo" target="_blank" style="display:block; text-align:center; padding:7px; font-size:12px; color:var(--text); background:var(--bg-elevated); text-decoration:none;">Ver en Twitch ↗</a>
+    </div>
+</div>
+
+<style>
+@keyframes pulseLive {
+    0%, 100% { opacity:1; }
+    50% { opacity:0.3; }
+}
+</style>
 
 </body>
 </html>
